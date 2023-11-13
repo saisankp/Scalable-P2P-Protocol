@@ -3,152 +3,147 @@ import time
 import threading
 import socket
 import keyboard
+from datetime import datetime
 
-# Flag to control anemometer data generation
-anemometer_enabled = True
+class HurricaneDevice:
+    def __init__(self):
+        # Sensor data and thresholds
+        self.anemometer_enabled = True
+        self.anemometer_data = 0
+        self.barometer_data = 0
+        self.hygrometer_data = 0
+        self.thermometer_data = 0
+        self.rain_gauge_data = 0
+        self.lightning_detector_data = 0
+        self.doppler_radar_data = 0
+        self.storm_surge_sensor_data = 0
 
-# Variables to store sensor data
-anemometer_data = 0
-barometer_data = 0
-hygrometer_data = 0
-thermometer_data = 0
-rain_gauge_data = 0
-lightning_detector_data = 0
-doppler_radar_data = 0
-storm_surge_sensor_data = 0
+        self.anemometer_threshold = 80
+        self.barometer_threshold = 1000
+        self.hygrometer_threshold = 70
+        self.thermometer_threshold = 30
+        self.rain_gauge_threshold = 10
+        self.lightning_detector_threshold = 5
+        self.doppler_radar_threshold = 100
+        self.storm_surge_sensor_threshold = 2
 
-# Thresholds for sensors
-anemometer_threshold = 80  # Example threshold for high wind speed
-barometer_threshold = 1000  # Example threshold for low atmospheric pressure
-hygrometer_threshold = 70  # Example threshold for high humidity
-thermometer_threshold = 30  # Example threshold for high temperature
-rain_gauge_threshold = 10  # Example threshold for heavy rainfall
-lightning_detector_threshold = 5  # Example threshold for frequent lightning
-doppler_radar_threshold = 100  # Example threshold for intense storm
-storm_surge_sensor_threshold = 2  # Example threshold for potential flooding
+        # FIB (Forwarding Information Base) table
+        self.fib_table = []
 
-# FIB (Forwarding Information Base) table
-fib_table = []
+        # Sample server node information
+        self.node_address = ('localhost', 5000)
 
-# Sample node information
-node_address = ('localhost', 5000)
+        # Socket for communication
+        self.client_socket = None
 
-# Function to simulate sensor data generation
-def generate_sensor_data():
-    global anemometer_data, barometer_data, hygrometer_data, thermometer_data
-    global rain_gauge_data, lightning_detector_data, doppler_radar_data, storm_surge_sensor_data
+        # Start the keyboard input handling thread
+        self.keyboard_thread = threading.Thread(target=self.keyboard_interrupt)
 
-    while True:
-        
-        if anemometer_enabled==True:
-            anemometer_data = random.uniform(0, 100)
-        barometer_data = random.uniform(950, 1050)
-        hygrometer_data = random.uniform(0, 100)
-        thermometer_data = random.uniform(-10, 40)
-        rain_gauge_data = random.uniform(0, 20)
-        lightning_detector_data = random.randint(0, 10)
-        doppler_radar_data = random.uniform(0, 200)
-        storm_surge_sensor_data = random.uniform(0, 5)
+        # Flag to control the main loop
+        self.running = False
 
-        print("Sensor Data:")
-        print(f"Anemometer: {anemometer_data} m/s")
-        print(f"Barometer: {barometer_data} hPa")
-        print(f"Hygrometer: {hygrometer_data} %")
-        print(f"Thermometer: {thermometer_data} °C")
-        print(f"Rain Gauge: {rain_gauge_data} mm")
-        print(f"Lightning Detector: {lightning_detector_data} strikes")
-        print(f"Doppler Radar: {doppler_radar_data} m/s")
-        print(f"Storm Surge Sensor: {storm_surge_sensor_data} m\n")
+    def start_monitoring(self):
+        self.running = True
+        # Start threads
+        self.keyboard_thread.start()
+        self.generate_sensor_data()
 
-        # Check thresholds and alert if exceeded
-        check_thresholds()
+    def stop_monitoring(self):
+        self.running = False
+        # Close the socket before exiting
+        if self.client_socket:
+            self.client_socket.close()
+        print("Exiting...")
 
-        time.sleep(5)
+    def generate_sensor_data(self):
+        while self.running:
+            if self.anemometer_enabled:
+                self.anemometer_data = random.uniform(0, 100)
+            self.barometer_data = random.uniform(950, 1050)
+            self.hygrometer_data = random.uniform(0, 100)
+            self.thermometer_data = random.uniform(-10, 40)
+            self.rain_gauge_data = random.uniform(0, 20)
+            self.lightning_detector_data = random.randint(0, 10)
+            self.doppler_radar_data = random.uniform(0, 200)
+            self.storm_surge_sensor_data = random.uniform(0, 5)
 
-# Function to check thresholds and alert authorities
-def check_thresholds():
-    # Example: Check anemometer threshold for high wind speed
-    if anemometer_data > anemometer_threshold:
-        alert_authorities("High wind speed detected!")
+            # Get the current timestamp
+            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # Example: Check barometer threshold for low atmospheric pressure
-    if barometer_data < barometer_threshold:
-        alert_authorities("Low atmospheric pressure detected!")
+            print("Sensor Data at Timestamp:", timestamp)
+            print(f"Anemometer: {self.anemometer_data} m/s")
+            print(f"Barometer: {self.barometer_data} hPa")
+            print(f"Hygrometer: {self.hygrometer_data} %")
+            print(f"Thermometer: {self.thermometer_data} °C")
+            print(f"Rain Gauge: {self.rain_gauge_data} mm")
+            print(f"Lightning Detector: {self.lightning_detector_data} strikes")
+            print(f"Doppler Radar: {self.doppler_radar_data} m/s")
+            print(f"Storm Surge Sensor: {self.storm_surge_sensor_data} m\n")
 
-    # Similar checks for other sensors...
-    if hygrometer_data > hygrometer_threshold:
-        alert_authorities("High humidity detected!")
+            # Check thresholds and alert if exceeded
+            self.check_thresholds()
 
-    if thermometer_data > thermometer_threshold:
-        alert_authorities("High temperature detected!")
+            time.sleep(5)
 
-    if rain_gauge_data > rain_gauge_threshold:
-        alert_authorities("Heavy rainfall detected!")
+    def check_thresholds(self):
+        if self.anemometer_data > self.anemometer_threshold:
+            self.alert_authorities("High wind speed detected!")
 
-    if lightning_detector_data > lightning_detector_threshold:
-        alert_authorities("Frequent lightning detected!")
+        if self.barometer_data < self.barometer_threshold:
+            self.alert_authorities("Low atmospheric pressure detected!")
 
-    if doppler_radar_data > doppler_radar_threshold:
-        alert_authorities("Intense storm detected!")
+        if self.hygrometer_data > self.hygrometer_threshold:
+            self.alert_authorities("High humidity detected!")
 
-    if storm_surge_sensor_data > storm_surge_sensor_threshold:
-        alert_authorities("Potential flooding detected!")
+        if self.thermometer_data > self.thermometer_threshold:
+            self.alert_authorities("High temperature detected!")
 
-# Function to alert authorities (in this case, send a message to a sample node)
-def alert_authorities(message):
-    print(f"ALERT: {message}")
-    #update_fib_table(message)
-    send_alert_message(message)
+        if self.rain_gauge_data > self.rain_gauge_threshold:
+            self.alert_authorities("Heavy rainfall detected!")
 
-# Function to send alert message to the sample node
-def send_alert_message(message):
-    try:
-        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            s.connect(node_address)
-            s.sendall(message.encode())
-    except Exception as e:
-        print(f"Error sending alert message: {e}")
+        if self.lightning_detector_data > self.lightning_detector_threshold:
+            self.alert_authorities("Frequent lightning detected!")
 
-# Function to update the Forwarding Information Base (FIB) table
-def update_fib_table(message):
-    global fib_table
-    entry = {"timestamp": time.time(), "message": message}
-    fib_table.append(entry)
-    print("FIB Table Updated:", fib_table)
+        if self.doppler_radar_data > self.doppler_radar_threshold:
+            self.alert_authorities("Intense storm detected!")
 
-# Function to simulate sensor failure using keyboard interrupt
-def simulate_sensor_failure():
-    global anemometer_enabled
-    print("Press 's' to stop anemometer data generation.")
-    print("Press 'q' to stop the entire program.")
-    try:
-        while True:
-            time.sleep(1)
-            if not anemometer_enabled:
-                continue
+        if self.storm_surge_sensor_data > self.storm_surge_sensor_threshold:
+            self.alert_authorities("Potential flooding detected!")
 
-    except KeyboardInterrupt:
-        key_pressed = keyboard.read_event(suppress=True).name
-        if key_pressed == 's':
-            anemometer_enabled = False
-            print("Anemometer data generation stopped.")
-        elif key_pressed == 'q':
-            print("Program terminated by user.")
-            # Exit the script or perform cleanup here if needed
-            exit()
+    def alert_authorities(self, message):
+        print(f"ALERT: {message}")
+        self.send_alert_message(message)
+
+    def send_alert_message(self, message):
+        try:
+            # Check if the socket is not connected
+            if self.client_socket is None or self.client_socket.fileno() == -1:
+                # Establish a new connection
+                self.client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                self.client_socket.connect(self.node_address)
+
+            # Send the message
+            self.client_socket.sendall(message.encode())
+        except Exception as e:
+            print(f"Error sending alert message: {e}")
+            # Close the socket on error
+            if self.client_socket:
+                self.client_socket.close()
+                self.client_socket = None
+
+    def keyboard_interrupt(self):
+        print("Press 's' to stop anemometer data generation.")
+        print("Press 'q' to stop the entire program.")
+        while self.running:
+            key_event = keyboard.read_event(suppress=True)
+            key_pressed = key_event.name
+            if key_pressed == 's':
+                self.anemometer_enabled = False
+                self.anemometer_data = 0
+                print("Anemometer data generation stopped.")
+            elif key_pressed == 'q':
+                self.stop_monitoring()
 
 if __name__ == "__main__":
-    # Start the sensor data generation thread
-    sensor_thread = threading.Thread(target=generate_sensor_data)
-    sensor_thread.start()
-
-    # Start the sensor failure simulation thread
-    failure_thread = threading.Thread(target=simulate_sensor_failure)
-    failure_thread.start()
-
-    # Keep the main thread running
-    try:
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        print("Exiting...")
+    device1 = HurricaneDevice()
+    device1.start_monitoring()
