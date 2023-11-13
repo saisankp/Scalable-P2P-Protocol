@@ -15,6 +15,7 @@ class ICNServer:
             try:
                 node_writer.write(f"New node connected: {address}".encode())
                 await node_writer.drain()
+                await asyncio.sleep(0.1)
             except asyncio.CancelledError:
                 pass
 
@@ -22,7 +23,7 @@ class ICNServer:
 
         try:
             while True:
-                data = await reader.read(100)
+                data = await reader.read(1000)
                 if not data:
                     break
 
@@ -40,6 +41,7 @@ class ICNServer:
                 try:
                     node_writer.write(f"Node disconnected: {address}".encode())
                     await node_writer.drain()
+                    await asyncio.sleep(0.1)
                 except asyncio.CancelledError:
                     pass
 
@@ -55,6 +57,7 @@ class ICNServer:
                 try:
                     node_writer.write(message.encode())
                     await node_writer.drain()
+                    await asyncio.sleep(0.1)
                 except asyncio.CancelledError:
                     pass
 

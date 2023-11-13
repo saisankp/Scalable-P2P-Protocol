@@ -1,11 +1,12 @@
 import asyncio
+import json
 
 class DroneChargerNode:
     def __init__(self, icn_host, icn_port):
         self.icn_host = icn_host
         self.icn_port = icn_port
         self.gps = (70, -2) # Latitude, Longitude near TCD
-        self.voltage = 0
+        self.voltage = 0 # Volts
         self.temperature = 10 # Degrees celcius
         self.solar_power_charging_rate = 0 # Wh/m 
         self.usage_status = False
@@ -31,6 +32,22 @@ class DroneChargerNode:
             #Locking actuator status changes when it is confirmed to have a drone on it
             #Fire alarm sensor doesn't change unless there is a fire
             #RFID Authenticator needs to be implemented for SECURITY/ENCRYPTION later on (after networks stuff)
+        
+        async def send_updates_on_sensor_data():
+            sensor_data = {
+                "GPS": {"latitude": self.gps[0], "longitude": self.gps[1]},
+                "Voltage": self.voltage,
+                "Temperature": self.temperature,
+                "Solar Power Charging Rate": self.solar_power_charging_rate,
+                "Usage Status": self.usage_status,
+                "Locking Actuator Status": self.locking_actuator_status,
+                "Fire Alarm Sensor": self.fire_alarm_sensor,
+                "RFID Authenticator Output": self.rfid_authenticator_output
+            }
+
+            # Convert the dictionary to a JSON string
+            json_data = json.dumps(sensor_data)
+            await send_message(json_data)
 
         async def send_message(message):
             writer.write(message.encode())
@@ -39,29 +56,28 @@ class DroneChargerNode:
 
         async def receive_messages():
             while True:
-                data = await reader.read(100)
+                data = await reader.read(1000)
                 if not data:
                     break
 
                 message = data.decode()
-                print(f"Received message from ICN: {message}")
-
-                if "New node connected" in message:
-                    print("New node joined the network!")
-
-                if "Node disconnected" in message:
-                    print("Node disconnected from the network.")
-
-                if "Charger availability?" in message:
-                    print("I'm a charger, and the drone wants me.")
-
-                if "Battery level:" in message:
-                    print(message)
-                    battery_level = float(message.split(":")[1].strip())
-                    print(message)
-                    if battery_level < 90:
+                try:
+                    message = json.loads(message)
+                    if(message["Battery Level"] < 20):
+                        print("I'm a charger, and the drone wants me. ")  
                         print("Drone battery low, checking charger availability...")
-                        await send_message("Charger availability?")
+                        await send_updates_on_sensor_data()
+                except json.JSONDecodeError as e:
+                    if "New node connected" in message:
+                        print("New node joined the network!")
+                    elif "Node disconnected" in message:
+                        print("Node disconnected from the network.")
+                    elif "Charger availability?" in message:
+                        print("I'm a charger, and the drone wants me.")
+                        print("Drone battery low, checking charger availability...")
+                        await send_updates_on_sensor_data()
+                    else:
+                        print(f"Received message from ICN: {message}")
 
         asyncio.create_task(receive_messages())
 

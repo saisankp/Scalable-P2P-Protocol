@@ -51,25 +51,13 @@ class DroneNode:
 
             # Convert the dictionary to a JSON string
             json_data = json.dumps(sensor_data)
+            print(json_data)
             await send_message(json_data)
-
-
-            # await send_message(f"GPS: {self.gps[0]}, {self.gps[1]}")
-            # await send_message(f"Battery level: {self.battery_level}")
-            # await send_message(f"Propeller speed: {self.propeller_speed}")
-            # await send_message(f"Barometric pressure: {self.barometric_pressure}")
-            # await send_message(f"Water release mechanism status: {self.water_release}")
-            # await send_message(f"Payload release mechanism status: {self.payload_release}")
-            # await send_message(f"Speaker status: {self.speaker_status}")
-            # await send_message(f"Flashlight status: {self.flashlight_status}")
-
-
-            
 
 
         async def receive_messages():
             while True:
-                data = await reader.read(100)
+                data = await reader.read(1000)
                 if not data:
                     break
 
@@ -93,7 +81,7 @@ class DroneNode:
             # await send_message(f"Battery level: {battery_percentage}")
             await send_updates_on_sensor_data()
 
-            if self.battery_level < 90:
+            if self.battery_level < 20:
                 print("Low battery, checking charger availability...")
                 await send_message("Charger availability?")
 
