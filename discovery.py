@@ -49,6 +49,8 @@ def discovery():
         # Send discovery message to the receiver
         device_socket.sendto(discovery_message.encode(), (discovery_ip, discovery_port))
 
+    time.sleep(3)
+
 
 discovery_thread = threading.Thread(target=discovery)
 discovery_thread.start()
