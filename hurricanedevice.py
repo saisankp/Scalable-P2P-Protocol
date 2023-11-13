@@ -97,7 +97,7 @@ def check_thresholds():
 # Function to alert authorities (in this case, send a message to a sample node)
 def alert_authorities(message):
     print(f"ALERT: {message}")
-    update_fib_table(message)
+    #update_fib_table(message)
     send_alert_message(message)
 
 # Function to send alert message to the sample node
