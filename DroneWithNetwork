@@ -4,6 +4,9 @@ import threading
 import re
 import math
 import numpy as np
+import os
+
+os.system("kill-port 33500")
 
 device_name = "Drone-2"
 device_ip = "localhost"
