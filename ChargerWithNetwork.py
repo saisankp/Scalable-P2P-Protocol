@@ -3,7 +3,7 @@ import socket
 import os
 import threading
 
-os.system("kill-port 33502")
+os.system("kill-port 33503")
 
 device_name = "Charger-1"
 device_ip = "localhost"
