@@ -25,11 +25,11 @@ class Earthquake:
             i = i + 1
         
             if self.active:
-                if i - self.start > 300:
+                if i - self.start > 20:
                     self.active = 0
 
             else:
-                rand  = random.randrange(1, 2)
+                rand  = random.randrange(1, 60)
                 if rand == 1 and i - self.start > 2:
                     self.start = i
                     self.active = 1
@@ -309,7 +309,7 @@ class DataMonitor:
     def __init__(self):
         self.history = []
         self.seismometer_active = 0
-        self.accelerometer = 0
+        self.accelerometer_active = 0
         self.inclinometer_active = 0
         self.acounsticsensor_active = 0
         self.straingauge_active = 0
