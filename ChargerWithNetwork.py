@@ -74,6 +74,7 @@ class DroneChargerNode:
                                 # if drone has arrived
                                 if (math.sqrt((int(self.gps[0]) - location[0])**2 + (int(self.gps[1]) - location[1])**2)) <= 1:
                                     self.usage_status = True
+                                    self.locking_actuator_status = True
                 
                     if self.usage_status:
                         gps_code = send_interest_packet("gps", device)
@@ -84,8 +85,10 @@ class DroneChargerNode:
                             time.sleep(.5)
 
                             if battery_level_code in DataReceived:
+                                # check if drone is fully charged
                                 if int(DataReceived[battery_level_code]) >= 100:
                                     self.usage_status = False
+                                    self.locking_actuator_status = False
                     
             time.sleep(1)
 
@@ -244,3 +247,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
