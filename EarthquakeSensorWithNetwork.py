@@ -30,7 +30,7 @@ class Earthquake:
 
             else:
                 rand  = random.randrange(1, 60)
-                if rand == 1 and i - self.start > 2:
+                if rand == 1 and i - self.start > 20:
                     self.start = i
                     self.active = 1
 
