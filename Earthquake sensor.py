@@ -3,7 +3,14 @@ import random
 import time
 import matplotlib.pyplot as plt
 import numpy as np
+import socket
+import threading
+import re
+import math
+import os
 
+
+### Sensor stuff
 ##  variable to artificially trigger an earthquake
 class Earthquake:
     def __init__(self):
@@ -13,37 +20,41 @@ class Earthquake:
 
     def trigger_earthquake(self):
     
-        for i in range(2000):
-            
-                if self.active:
-                    if i - self.start > 300:
-                        self.active = 0
+        i = 0
+        while True:
+            i = i + 1
+        
+            if self.active:
+                if i - self.start > 300:
+                    self.active = 0
 
-                else:
-                    rand  = random.randrange(1, 800)
-                    if rand == 1 and i - self.start > 600:
-                        self.start = i
-                        self.active = 1
+            else:
+                rand  = random.randrange(1, 2)
+                if rand == 1 and i - self.start > 2:
+                    self.start = i
+                    self.active = 1
 
-                self.history.append(self.active)
-                #print("earthquake:", bool(self.active))
-                time.sleep(0.00001)
+            self.history.append(self.active)
+            print("earthquake:", bool(self.active))
+            time.sleep(1)
 
 
 class Seismometer:
     def __init__(self):
         self.output = 0
         self.history = []
-        self.active = 1
         self.triggered = 0
         self.threshold = .5
+        self.activated = 0
 
     def generate_data(self):        
         high = 1
         low = .05
         amplitude = .1
 
-        for i in range(2000):
+        i = 0
+        while True:
+            i = i + 1
 
             noise = 0
 
@@ -62,20 +73,21 @@ class Seismometer:
                 self.output = amplitude*np.sin(35*np.pi*i/1000) + noise
 
             self.history.append(self.output)
+            self.activated = abs(self.output) >= self.threshold
             #print(self.output)
-            time.sleep(0.00001)
+            time.sleep(1)
 
 
 class Accelerometer:
     def __init__(self):
         self.output = 0
         self.history = []
-        self.active = 1
         self.triggered = 0
         self.threshold = .5
+        self.activated = 0
 
     def generate_data(self):
-        for i in range(2000):
+        while True:
             if (not earthquake.active): # random noise if there is no earthquake
                 if abs(self.output) < (self.threshold*.9):
                     increment = random.uniform(-1.1*abs(self.output), .05)
@@ -101,19 +113,20 @@ class Accelerometer:
             else: self.output = self.output - increment
 
             self.history.append(self.output)
+            self.activated = abs(self.output) >= self.threshold
             #print(self.output)
-            time.sleep(0.00001)
+            time.sleep(1)
 
 class Inclinometer:
     def __init__(self):
         self.output = 0
         self.history = []
-        self.active = 1
         self.triggered = 0
         self.threshold = .5
+        self.activated = 0
 
     def generate_data(self):
-        for i in range(2000):
+        while True:
             if (not earthquake.active): # random noise if there is no earthquake
                 if abs(self.output) < (self.threshold*.9):
                     increment = random.uniform(-1.5*abs(self.output), .1)
@@ -133,17 +146,18 @@ class Inclinometer:
             else: self.output = self.output - increment
 
             self.history.append(self.output)
+            self.activated = abs(self.output) >= self.threshold
             #print(self.output)
-            time.sleep(0.00001)
+            time.sleep(1)
 
 
 class StrainGauge:
     def __init__(self):
         self.output = 0
         self.history = []
-        self.active = 1
         self.triggered = 0
         self.threshold = .5
+        self.activated = 0
 
     def generate_data(self):
         
@@ -151,7 +165,9 @@ class StrainGauge:
         amplitude = 0
         c = 0
 
-        for i in range(2000):
+        i = 0
+        while True:
+            i = i + 1
 
             noise = 0
 
@@ -172,20 +188,21 @@ class StrainGauge:
                 self.output = c+amplitude*np.sin(35*np.pi*i/1000) + noise
         
             self.history.append(self.output)
+            self.activated = abs(self.output) >= self.threshold
             #print(self.output)
-            time.sleep(0.00001)
+            time.sleep(1)
 
 
 class AcousticSensor:
     def __init__(self):
         self.output = 0
         self.history = []
-        self.active = 1
         self.triggered = 0
         self.threshold = .5
+        self.activated = 0
 
     def generate_data(self):
-        for i in range(2000):
+        while True:
             if (not earthquake.active): # random noise if there is no earthquake
                 if (self.output < (self.threshold*.9)):
                     increment = random.uniform(max(-self.output, -.5*.5*self.threshold), .05)
@@ -206,26 +223,27 @@ class AcousticSensor:
 
             self.output = self.output + increment
             self.history.append(self.output)
+            self.activated = abs(self.output) >= self.threshold
             #print(self.output)
-            time.sleep(0.00001)
+            time.sleep(1)
 
 
 class PwaveSensor:
     def __init__(self):
         self.output = 0
         self.history = []
-        self.active = 1
         self.triggered = 0
         self.threshold = .25
+        self.activated = 0
 
     def generate_data(self):        
         high = .5
         low = .05
         amplitude = .1
 
-        for i in range(2000):
-
-            #if (not earthquake.active):
+        i = 0
+        while True:
+            i = i + 1
             noise = 0
 
             rand  = random.randrange(1, 5)
@@ -243,26 +261,28 @@ class PwaveSensor:
                 self.output = amplitude*np.sin(35*np.pi*i/1000) + noise
 
             self.history.append(self.output)
+            self.activated = abs(self.output) >= self.threshold
             #print(self.output)
-            time.sleep(0.00001)
+            time.sleep(1)
 
 
 class SwaveSensor:
     def __init__(self):
         self.output = 0
         self.history = []
-        self.active = 1
         self.triggered = 0
         self.threshold = .5
+        self.activated = 0
 
     def generate_data(self):        
         high = 1
         low = .1
         amplitude = .1
 
-        for i in range(2000):
+        i = 0
+        while True:
+            i = i + 1
 
-            #if (not earthquake.active):
             noise = 0
 
             rand  = random.randrange(1, 5)
@@ -280,31 +300,204 @@ class SwaveSensor:
                 self.output = amplitude*np.sin(35*np.pi*i/1000) + noise
 
             self.history.append(self.output)
+            self.activated = abs(self.output) >= self.threshold
             #print(self.output)
-            time.sleep(0.00001)
-                
+            time.sleep(1)
+            
 # checks if sensors are detedcting an earthquake
 class DataMonitor:
     def __init__(self):
         self.history = []
+        self.seismometer_active = 0
+        self.accelerometer = 0
+        self.inclinometer_active = 0
+        self.acounsticsensor_active = 0
+        self.straingauge_active = 0
+        self.pwavesensor_active = 0
+        self.swavesensor_active = 0
+        self.gps = (50,50)
 
     def monitor_data(self):
         
-        for i in range(2000):
-            time.sleep(0.00001)
-            seismometer_active = abs(seismometer.output) > seismometer.threshold
-            accelerometer_active = abs(accelerometer.output) > accelerometer.threshold
-            inclinometer_active = abs(inclinometer.output) > acounsticsensor.threshold
-            acounsticsensor_active = acounsticsensor.output > acounsticsensor.threshold
-            straingauge_active = straingauge.output > straingauge.threshold
-            pwavesensor_active = abs(pwavesensor.output) > pwavesensor.threshold
-            swavesensor_active = abs(swavesensor.output) > swavesensor.threshold
+        while True:
+            time.sleep(1)
+            self.seismometer_active = seismometer.activated
+            self.accelerometer_active = accelerometer.activated
+            self.inclinometer_active = inclinometer.activated
+            self.acounsticsensor_active = acounsticsensor.activated
+            self.straingauge_active = straingauge.activated
+            self.pwavesensor_active = pwavesensor.activated
+            self.swavesensor_active = swavesensor.activated
 
-            sensor_activations = [seismometer_active, accelerometer_active, inclinometer_active, acounsticsensor_active, straingauge_active, pwavesensor_active, swavesensor_active]
-            self.history.append(sum(sensor_activations))
+            #sensor_activations = [self.seismometer_active, self.accelerometer_active, self.inclinometer_active, self.acounsticsensor_active, self.straingauge_active, self.pwavesensor_active, self.swavesensor_active]
+            #self.history.append(sum(sensor_activations))
+            
+            #if sum(sensor_activations) > 3:
+                #print("Threshold breached!")
 
-            if sum(sensor_activations) > 3:
-                print("Threshold breached!", i)
+
+### Network stuff
+
+def discovery():
+    while True:
+        discovery_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        discovery_message = device_name
+        try:
+            # Check if port is available
+            discovery_socket.bind((discovery_ip, discovery_port))
+            discovery_socket.settimeout(1)
+            connection_time = time.time()
+
+            # Hold the connection for 2 seconds to listen for incoming discovery messages
+            while time.time() - connection_time < 2:
+                try:
+                    data, sender_address = discovery_socket.recvfrom(1024)
+                    knownDevices[data.decode()] = sender_address
+                except socket.timeout:
+                    continue
+
+            # Close socket to allow other devices to connect
+            discovery_socket.close()
+        except OSError as e:
+            # Send discovery message to the receiver
+            device_socket.sendto(discovery_message.encode(), (discovery_ip, discovery_port))
+
+        time.sleep(1)
+
+
+# send an interest packet for a piece of data on a different device
+def send_interest_packet(data, device):
+    global requestCodeNum
+    requestCodeNum = requestCodeNum + 1
+    requestCode = str(device_name)+str(requestCodeNum)
+
+    packet = "interest"+"/"+requestCode+"/"+str(device)+"/"+str(data)
+    interestRequests[requestCode] = [str(device), str(data)]
+
+    # if no specific devices are mentioned in the call
+    if device == "none":
+        # check if data is in the forwarding table
+        if str(device)+"/"+str(data) in forwardingTable:
+                device_socket.sendto(packet.encode(), forwardingTable[str(device)+"/"+str(data)])
+                #awaitedAcks[requestCode] = [packet, time.time()]
+
+        # if not perform flooding
+        else:
+            for devices in knownDevices:
+                device_socket.sendto(packet.encode(), knownDevices[devices])
+
+    else:
+        device_socket.sendto(packet.encode(), knownDevices[device])
+
+    return requestCode
+
+
+def handle_interests(message, address):
+
+    interest_code = message.split('/')[1]
+    requested_device = message.split('/')[2]
+    requested_data = message.split('/')[3]
+
+    # if this is the requested device, send the info
+    if requested_device == device_name:
+        send_requested_data(message, address)
+
+    # else forward the packet if it hasnt been already
+    elif interest_code not in interestForwards:
+
+        interestForwards[interest_code] = address # add to list of unresolved interests
+
+        # check if requested data is in forwarding table
+        if str(requested_device)+"/"+str(requested_data) in forwardingTable:
+            print("sending from table")
+            device_socket.sendto(message.encode(), forwardingTable[str(requested_device)+"/"+str(requested_data)])
+            #awaitedAcks[interest_code] = [message, time.time()]
+
+        # if not perform flooding
+        else:
+            for device in knownDevices:
+                if knownDevices[device] != address: # dont send the interest back to the sender
+                    device_socket.sendto(message.encode(), knownDevices[device])
+
+
+def handle_data(message, address):
+
+    interest_code = message.split('/')[1]
+    requested_device = message.split('/')[2]
+    requested_data = message.split('/')[3]
+
+    # add sender to forwarding table
+    forwardingTable[str(requested_device)+"/"+str(requested_data)] = address
+
+    # if interest request was made by this device
+    if interest_code in interestRequests:
+        #print("data received:", message)
+        DataReceived[interest_code] = requested_data
+        del interestRequests[interest_code]
+
+    # if not forward to the correct device
+    elif interest_code in interestForwards:
+        device_socket.sendto(message.encode(), interestForwards[interest_code])
+        #awaitedAcks[interest_code] = [message, time.time()]
+        del interestForwards[interest_code]
+
+    # if this data has not been requested perform flooding
+    elif interest_code not in dataForwards:
+        dataForwards[interest_code] = requested_data
+        for device in knownDevices:
+                if knownDevices[device] != address: # dont send the interest back to the sender
+                    device_socket.sendto(message.encode(), knownDevices[device])
+
+
+def send_requested_data(message, address):
+    interest_code = message.split('/')[1]
+    requested_device = message.split('/')[2]
+    requested_data = message.split('/')[3]
+
+    data_response = "data"+"/"+str(interest_code)+"/"+str(requested_device)+"/"+str(getattr(datamonitor, requested_data))
+
+    device_socket.sendto(data_response.encode(), address)
+
+
+def receive_messages():
+    while True:
+        print("awaiting messages")
+        try:
+            data, sender_address = device_socket.recvfrom(1024)
+            #print("Received connection: ", sender_address, data.decode())
+
+            # check message is interset request or data
+            if data.decode().split('/')[0] == "interest":
+                handle_interests(data.decode(), sender_address)
+
+            elif data.decode().split('/')[0] == "data":
+                handle_data(data.decode(), sender_address)
+
+        except ConnectionResetError as e: continue
+
+
+os.system("kill-port 33505")
+
+device_name = "EarthquakeSensor-1"
+device_ip = "localhost"
+device_port = 33505
+
+discovery_ip = "localhost" 
+discovery_port = 33333
+
+# devices are stored as device: (ip, port)
+knownDevices = {}
+forwardingTable = {} # device + "/" + data: address
+interestForwards = {} #{} # interest code: address
+interestRequests = {} # interest codes generated by this device
+dataForwards = {} # interest code: address
+DataReceived = {} # intereset code: data
+requestCodeNum = 0
+
+# bind to device unique port
+device_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+device_socket.bind((device_ip, device_port))
+print("UDP socket connected")
 
 
 earthquake = Earthquake()
@@ -327,6 +520,8 @@ straingauge_thread = threading.Thread(target=straingauge.generate_data)
 pwavesensor_thread = threading.Thread(target=pwavesensor.generate_data)
 swavesensor_thread = threading.Thread(target=swavesensor.generate_data)
 data_monitoring_thread = threading.Thread(target=datamonitor.monitor_data)
+discovery_thread = threading.Thread(target=discovery)
+receive_messages_thread = threading.Thread(target=receive_messages)
 
 # Start threads
 trigger_earthquake_thread.start()
@@ -338,17 +533,8 @@ straingauge_thread.start()
 pwavesensor_thread.start()
 swavesensor_thread.start()
 data_monitoring_thread.start()
-
-# wait for thread to finish
-trigger_earthquake_thread.join()
-seismometer_thread.join()
-accelerometer_thread.join()
-inclinometer_thread.join()
-acounsticsensor_thread.join()
-straingauge_thread.join()
-pwavesensor_thread.join()
-swavesensor_thread.join()
-data_monitoring_thread.join()
+discovery_thread.start()
+receive_messages_thread.start()
 
 # plot outputs
 plt.plot(earthquake.history)
