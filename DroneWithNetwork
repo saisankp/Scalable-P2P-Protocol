@@ -28,7 +28,7 @@ class DroneNode:
     def __init__(self):
         self.destination = (0,0)
         self.charging = False
-        self.nearest_charger = ""
+        self.busy = False
         self.gps = (0, 0) # Latitude, Longitude of TCD
         self.battery_level = 100 # Battery percentage
         self.propeller_speed = 0 # RPM
@@ -44,12 +44,13 @@ class DroneNode:
             print(self.gps)
 
             if not self.charging:
-                self.battery_level -= 5
+                self.battery_level -= .5
             else: 
-                self.battery_level += 20
+                self.battery_level += 10
                 if self.battery_level >= 100:
                     print("fully charged")
                     self.charging = False
+                    self.busy = False
                     self.destination = (0,0)
 
             if(self.propeller_speed < 10000):
@@ -76,7 +77,10 @@ class DroneNode:
 
     def drone_logic(self):
         while True:
-            if(self.battery_level <= 80):
+            # if battery is low
+            if(self.battery_level <= 25):
+                # Drone cannot be used for tasks
+                self.busy = True 
                 if self.charging == False:
                     available_charger_locations = []
                     
@@ -114,8 +118,33 @@ class DroneNode:
                 else: 
                     print("charging..", self.battery_level, "%")
 
+            # Check earthquake sensors
+            for device in knownDevices:
+                if(device.split("-")[0] == "EarthquakeSensor"):
+                    seismometer_code = send_interest_packet("seismometer_active", device)
+                    accelerometer_code = send_interest_packet("accelerometer_active", device)
+                    inclinometer_code = send_interest_packet("inclinometer_active", device)
+                    acounsticsensor_code = send_interest_packet("acounsticsensor_active", device)
+                    straingauge_code = send_interest_packet("straingauge_active", device)
+                    pwavesensor_code = send_interest_packet("pwavesensor_active", device)
+                    swavesensor_code = send_interest_packet("swavesensor_active", device)
+                    sensor_codes = [seismometer_code,accelerometer_code,inclinometer_code,acounsticsensor_code,straingauge_code,pwavesensor_code,swavesensor_code]
+                    time.sleep(.5)
 
-                #print("current destination:", self.destination)
+                    # check if at least half of the sensors are detecting an earthquake
+                    if all(key in DataReceived for key in sensor_codes):
+                        if sum([bool(DataReceived[seismometer_code]),bool(DataReceived[accelerometer_code]),bool(DataReceived[inclinometer_code]),bool(DataReceived[acounsticsensor_code]),bool(DataReceived[straingauge_code]),bool(DataReceived[pwavesensor_code]),bool(DataReceived[swavesensor_code])]) > 2:
+                            gps_code = send_interest_packet("gps", device)
+                            print("Earthquake detected")
+                            time.sleep(.5)
+
+                            if gps_code in DataReceived:
+                                # extract numbers from string
+                                location = re.findall(r'-?\d+\.\d+|-?\d+', DataReceived[gps_code])
+                                self.destination = ([float(i) for i in location])
+
+                                
+                                
 
             time.sleep(2)
 
@@ -249,7 +278,6 @@ def send_requested_data(message, address):
 
 def receive_messages():
     while True:
-        print("awaiting messages")
         try:
             data, sender_address = device_socket.recvfrom(1024)
             #print("Received connection: ", sender_address, data.decode())
@@ -295,12 +323,6 @@ def main():
     discovery_thread.start()
     receive_messages_thread.start()
 
-    #while True:
-        #drone.drone_logic()
-        #drone.simulate_sensor_data()
-        #print(drone.battery_level)
-        #print(knownDevices)
-        #await asyncio.gather(discovery(), asyncio.sleep(1))
-
 if __name__ == "__main__":
     main()
+
