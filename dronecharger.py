@@ -207,7 +207,7 @@ def receive_messages():
                 handle_interests(data.decode(), sender_address)
             elif data.decode().split('/')[0] == "data":
                 handle_data(data.decode(), sender_address)
-        except ConnectionResetError as e: continue
+        except socket.error as e: continue
 
 
 def parseArguments(parser):

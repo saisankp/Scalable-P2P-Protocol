@@ -8,6 +8,9 @@ cd ..
 # Install virtualenv for virtual environment
 python -m pip install virtualenv 
 
+# Create a virtual environment
+python -m virtualenv env
+
 # Activate the environment
 source env/bin/activate
 

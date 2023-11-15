@@ -11,3 +11,4 @@ python drone.py --device-name Drone-1 --device-ip localhost --device-port 33500 
 
 # 10.35.70.2 NETWORK
 python drone.py --device-name Drone-2 --device-ip 10.35.70.2 --device-port 33500 --discovery-ip localhost --discovery-port 33333
+python drone.py --device-name Charger-1 --device-ip 10.35.70.2 --device-port 33500 --discovery-ip 10.35.70.27 --discovery-port 33333
