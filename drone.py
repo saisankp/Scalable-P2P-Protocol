@@ -35,7 +35,7 @@ class Drone:
             self.update_gps()
             print("🛸 " + device_name + ": current location is " + str(self.gps))
             if not self.charging:
-                self.battery_level -= 0.5 # Battery level goes down over time
+                self.battery_level -= 5 # Battery level goes down over time
                 print("🛸 " + device_name + ": current battery percentage is " + str(self.battery_level))
             else: 
                 self.battery_level += 10 # If charging, the battery goes up
@@ -89,19 +89,14 @@ class Drone:
                             temperature_code = send_interest_packet("temperature", device)
                             locking_actuator_code = send_interest_packet("locking_actuator_status", device)
 
-                            # Allow time for the interest packet to permeate through the network
-                            time.sleep(0.5)
-
                             # If the charger is available, get the GPS of the charger so the drone can go towards it.
                             if usage_status_code in DataReceived and usage_voltage_code in DataReceived and temperature_code in DataReceived and locking_actuator_code in DataReceived:
                                 if DataReceived[usage_status_code] == "False" and DataReceived[usage_voltage_code] == "17" and int(DataReceived[temperature_code]) < 40 and DataReceived[locking_actuator_code] == "False":
-                                    code = send_interest_packet("gps", device)
-                                    # Allow time for the interest packet to permeate through the network
-                                    time.sleep(0.5)
+                                    gps_code = send_interest_packet("gps", device)
                                     # If we receive an answer from the charger which states its GPS location, then we set our destination with it
-                                    if code in DataReceived:
+                                    if gps_code in DataReceived:
                                         # Extract location from string using regex
-                                        location = re.findall(r'-?\d+\.\d+|-?\d+', DataReceived[code])
+                                        location = re.findall(r'-?\d+\.\d+|-?\d+', DataReceived[gps_code])
                                         available_charger_locations.append([float(i) for i in location])
                     
                     # If the amount of available chargers is greater than zero
@@ -122,34 +117,30 @@ class Drone:
                 # Check earthquake sensors
                 for device in knownDevices:
                     if device.split("-")[0] == "WildfireDevice":
-                            smoke_particle_sensor_code = send_interest_packet("smoke_particle_sensor_active", device)
-                            infrared_sensor_code = send_interest_packet("infrared_sensor_active", device)
-                            gas_sensor_code = send_interest_packet("gas_sensor_active", device)
-                            wind_sensor_code = send_interest_packet("wind_sensor_active", device)
-                            humidity_sensor_code = send_interest_packet("humidity_sensor_active", device)
-                            temperature_probe_code = send_interest_packet("temperature_probe_active", device)
-                            fire_radiometer_code = send_interest_packet("fire_radiometer_active", device)
-                            sensor_codes = [smoke_particle_sensor_code,infrared_sensor_code,gas_sensor_code,wind_sensor_code,humidity_sensor_code,temperature_probe_code,fire_radiometer_code]
-                             # Allow time for the interest packets to permeate through the network
-                            time.sleep(0.5)
+                        smoke_particle_sensor_code = send_interest_packet("smoke_particle_sensor_active", device)
+                        infrared_sensor_code = send_interest_packet("infrared_sensor_active", device)
+                        gas_sensor_code = send_interest_packet("gas_sensor_active", device)
+                        wind_sensor_code = send_interest_packet("wind_sensor_active", device)
+                        humidity_sensor_code = send_interest_packet("humidity_sensor_active", device)
+                        temperature_probe_code = send_interest_packet("temperature_probe_active", device)
+                        fire_radiometer_code = send_interest_packet("fire_radiometer_active", device)
+                        sensor_codes = [smoke_particle_sensor_code,infrared_sensor_code,gas_sensor_code,wind_sensor_code,humidity_sensor_code,temperature_probe_code,fire_radiometer_code]
+                        
+                        # Check if at least half of the sensors are sensors are detecting a fire
+                        if all(key in DataReceived for key in sensor_codes):
+                            if [(DataReceived[smoke_particle_sensor_code]),(DataReceived[infrared_sensor_code]),(DataReceived[gas_sensor_code]),(DataReceived[wind_sensor_code]),(DataReceived[humidity_sensor_code]),(DataReceived[temperature_probe_code]),(DataReceived[fire_radiometer_code])].count("True") >= 6:
+                                    # A wildfire has been detected. Mark the drone as busy and ask for the wildfire sensor's GPS location.
+                                gps_code = send_interest_packet("gps", device)
+                                self.busy = True # Mark drone as busy
+                                print("🛸 " + device_name + ": informed of a detected wildfire 🔥")
 
-                            # Check if at least half of the sensors are sensors are detecting a fire
-                            if all(key in DataReceived for key in sensor_codes):
-                                if [(DataReceived[smoke_particle_sensor_code]),(DataReceived[infrared_sensor_code]),(DataReceived[gas_sensor_code]),(DataReceived[wind_sensor_code]),(DataReceived[humidity_sensor_code]),(DataReceived[temperature_probe_code]),(DataReceived[fire_radiometer_code])].count("True") >= 6:
-                                     # A wildfire has been detected. Mark the drone as busy and ask for the wildfire sensor's GPS location.
-                                    gps_code = send_interest_packet("gps", device)
-                                    self.busy = True # Mark drone as busy
-                                    print("🛸 " + device_name + ": informed of a detected wildfire 🔥")
-                                    # Allow time for the interest packets to permeate through the network
-                                    time.sleep(0.5)
-
-                                    if gps_code in DataReceived:
-                                        # extract numbers from string
-                                        location = re.findall(r'-?\d+\.\d+|-?\d+', DataReceived[gps_code])
-                                        self.destination = ([float(i) for i in location])
-                                        self.fire = True
-                                    else: 
-                                        print("🛸 " + device_name + ": GPS of wildfire device could not be found")
+                                if gps_code in DataReceived:
+                                    # extract numbers from string
+                                    location = re.findall(r'-?\d+\.\d+|-?\d+', DataReceived[gps_code])
+                                    self.destination = ([float(i) for i in location])
+                                    self.fire = True
+                                else: 
+                                    print("🛸 " + device_name + ": GPS of wildfire device could not be found")
                     elif device.split("-")[0] == "HurricaneDevice":
                         anemometer_code = send_interest_packet("anemometer_active", device)
                         barometer_code = send_interest_packet("barometer_active", device)
@@ -160,16 +151,13 @@ class Drone:
                         doppler_radar_code = send_interest_packet("doppler_radar_active", device)
                         storm_surge_sensor_code = send_interest_packet("storm_surge_sensor_active", device)
                         sensor_codes = [anemometer_code,barometer_code,hygrometer_code,thermometer_code,rain_gauge_code,lightning_detector_code,doppler_radar_code,storm_surge_sensor_code]
-                         # Allow time for the interest packet to permeate through the network
-                        time.sleep(0.5)
-
+                        
                         # Check if at least half of the sensors are detecting an hurricane
                         if all(key in DataReceived for key in sensor_codes):
                             if [(DataReceived[anemometer_code]),(DataReceived[barometer_code]),(DataReceived[hygrometer_code]),(DataReceived[thermometer_code]),(DataReceived[rain_gauge_code]),(DataReceived[lightning_detector_code]),(DataReceived[doppler_radar_code]), (DataReceived[storm_surge_sensor_code])].count("True") >= 3:
                                 gps_code = send_interest_packet("gps", device)
                                 self.busy = True # mark drone as busy
                                 print("🛸 " + device_name + ": informed of a detected hurricane 🌀")
-                                time.sleep(.5)
 
                                 if gps_code in DataReceived:
                                     # extract numbers from string
@@ -188,8 +176,6 @@ class Drone:
                         pwavesensor_code = send_interest_packet("pwavesensor_active", device)
                         swavesensor_code = send_interest_packet("swavesensor_active", device)
                         sensor_codes = [seismometer_code,accelerometer_code,inclinometer_code,acounsticsensor_code,straingauge_code,pwavesensor_code,swavesensor_code]
-                        # Allow time for the interest packets to permeate through the network
-                        time.sleep(0.5)
 
                         # Check if at least half of the sensors are detecting an earthquake (to stop false positive reactions)
                         if all(key in DataReceived for key in sensor_codes):
@@ -198,8 +184,6 @@ class Drone:
                                 gps_code = send_interest_packet("gps", device)
                                 self.busy = True
                                 print("🛸 " + device_name + ": informed of a detected earthquake 🌋")
-                                # Allow time for the interest packet to permeate through the network
-                                time.sleep(0.5)
                                 
                                 # If we get a response from the earthquake device for its GPS location, the drone should go to the disaster location
                                 if gps_code in DataReceived:
@@ -232,6 +216,29 @@ class Drone:
                     print("🛸 " + device_name + ": Speaker is on 🔊")
                     # Disaster has passed
                     self.earthquake = False
+
+                elif self.hurricane:
+                    print("🛸 " + device_name + ": Arrived at hurricane location. Using actuators...📟")
+                    self.payload_release = True
+                    print("🛸 " + device_name + ": Payload released 📦")
+                    self.flashlight_status = True
+                    print("🛸 " + device_name + ": Flashlight is on 🔦")
+                    self.speaker_status = True
+                    print("🛸 " + device_name + ": Speaker is on 🔊")
+                    # Disaster has passed
+                    self.hurrcane = False
+
+                elif self.fire:
+                    print("🛸 " + device_name + ": Arrived at hurricane location. Using actuators...📟")
+                    self.water_release = True
+                    print("🛸 " + device_name + ": water released 🧯")
+                    self.payload_release = True
+                    print("🛸 " + device_name + ": Payload released 📦")
+                    self.flashlight_status = True
+                    print("🛸 " + device_name + ": Flashlight is on 🔦")
+                    self.speaker_status = True
+                    print("🛸 " + device_name + ": Speaker is on 🔊")
+                    self.fire = False
 
             # Wait two seconds before trying to cater for a disaster again
             time.sleep(2)
@@ -276,6 +283,7 @@ def discovery():
 # Send an interest packet for a piece of data on a different device
 def send_interest_packet(data, device):
     global requestCodeNum
+    global DataReceived
     requestCodeNum = requestCodeNum + 1
     requestCode = str(device_name)+str(requestCodeNum)
     packet = "interest"+"/"+requestCode+"/"+str(device)+"/"+str(data)
@@ -291,6 +299,14 @@ def send_interest_packet(data, device):
                 device_socket.sendto(packet.encode(), knownDevices[devices])
     else:
         device_socket.sendto(packet.encode(), knownDevices[device])
+        time.sleep(.1)
+        # Check if the requested data has been received
+        if requestCode not in DataReceived:
+            # If not, perform flooding (contact all known devices)
+            print("No response from", device, "Performing flooding", requestCode)
+            for devices in knownDevices:
+                device_socket.sendto(packet.encode(), knownDevices[devices])
+            time.sleep(.1)
     return requestCode
 
 
