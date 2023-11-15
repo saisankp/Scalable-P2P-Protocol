@@ -1,13 +1,9 @@
-# Install python 3.8.12
-mkdir python
-cd python
-wget https://www.python.org/ftp/python/3.8.12/Python-3.8.12.tgz
-tar -xzvf Python-3.8.12.tgz
-cd Python-3.8.12
-./configure --prefix=$HOME/python-3.8.12
-make
-make install
-export PATH=$HOME/python-3.8.12/bin:$PATH
+# Install pip for python
+mkdir -p pip
+cd pip
+wget https://bootstrap.pypa.io/pip/2.7/get-pip.py
+python get-pip.py
+cd ..
 
 # Install virtualenv for virtual environment
 python -m pip install virtualenv 
@@ -15,3 +11,8 @@ python -m pip install virtualenv
 # Activate the environment
 source env/bin/activate
 
+# Install numpy with pip
+python -m pip install numpy
+
+# Install argeparse with pip
+python -m pip install argparse

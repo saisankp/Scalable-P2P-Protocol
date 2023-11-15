@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
-import random
 import time
+import random
 import threading
 import socket
 import threading
@@ -10,73 +10,136 @@ import signal
 import subprocess
 import argparse
 
-### sensor data
-class HurricaneDevice:
+
+class WildfireMonitor:
     def __init__(self):
-        # Sensor data and thresholds
-        self.anemometer_data = 0
-        self.barometer_data = 0
-        self.hygrometer_data = 0
-        self.thermometer_data = 0
-        self.rain_gauge_data = 0
-        self.lightning_detector_data = 0
-        self.doppler_radar_data = 0
-        self.storm_surge_sensor_data = 0
-        self.anemometer_threshold = 85
-        self.barometer_threshold = 1000
-        self.hygrometer_threshold = 85
-        self.thermometer_threshold = 32
-        self.rain_gauge_threshold = 15
-        self.lightning_detector_threshold = 8
-        self.doppler_radar_threshold = 160
-        self.storm_surge_sensor_threshold = 4
-        self.gps = (-70,30)
-        self.anemometer_active = 0
-        self.barometer_active = 0
-        self.hygrometer_active = 0
-        self.thermometer_active = 0
-        self.rain_gauge_active = 0
-        self.lightning_detector_active = 0
-        self.doppler_radar_active = 0
-        self.storm_surge_sensor_active = 0
+        # Initialize sensors and set threshold values
+        self.smoke_particle_sensor = SmokeParticleSensor(threshold=30)
+        self.infrared_sensor = InfraredSensor(threshold=0.2)
+        self.gas_sensor = GasSensor(threshold=20)
+        self.wind_sensor = WindSensor(threshold_speed=4)
+        self.humidity_sensor = HumiditySensor(threshold=30)
+        self.temperature_probe = TemperatureProbe(threshold=20)
+        self.gps_tracker = GPSTracker()
+        self.fire_radiometer = FireRadiometer(threshold=50)
+        self.gps = (-35,-20)
+        self.smoke_particle_sensor_active = 0
+        self.infrared_sensor_active = 0
+        self.gas_sensor_active = 0
+        self.wind_sensor_active = 0
+        self.humidity_sensor_active = 0
+        self.temperature_probe_active = 0
+        self.fire_radiometer_active = 0
 
 
-    def generate_sensor_data(self):
+    def read_sensors(self):
         while True:
-            self.anemometer_data = random.uniform(0, 100)
-            self.barometer_data = random.uniform(950, 1050)
-            self.hygrometer_data = random.uniform(0, 100)
-            self.thermometer_data = random.uniform(-10, 40)
-            self.rain_gauge_data = random.uniform(0, 20)
-            self.lightning_detector_data = random.randint(0, 10)
-            self.doppler_radar_data = random.uniform(0, 200)
-            self.storm_surge_sensor_data = random.uniform(0, 5)
-            self.anemometer_active = self.anemometer_data > self.anemometer_threshold
-            self.barometer_active = self.barometer_data < self.barometer_threshold
-            self.hygrometer_active = self.hygrometer_data > self.hygrometer_threshold
-            self.thermometer_active = self.thermometer_data > self.thermometer_threshold
-            self.rain_gauge_active = self.rain_gauge_data > self.rain_gauge_threshold
-            self.lightning_detector_active = self.lightning_detector_data > self.lightning_detector_threshold
-            self.doppler_radar_active = self.doppler_radar_data > self.doppler_radar_threshold
-            self.storm_surge_sensor_active = self.storm_surge_sensor_data > self.storm_surge_sensor_threshold
-            
+            smoke_level = self.smoke_particle_sensor.detect_smoke()
+            infrared_data = self.infrared_sensor.measure_infrared()
+            gas_level = self.gas_sensor.detect_gas()
+            wind_direction, wind_speed = self.wind_sensor.measure_wind()
+            humidity_level = self.humidity_sensor.measure_humidity()
+            temperature = self.temperature_probe.measure_temperature()
+            fire_intensity = self.fire_radiometer.measure_fire_intensity()
+            self.smoke_particle_sensor_active = smoke_level > self.smoke_particle_sensor.threshold
+            self.infrared_sensor_active = infrared_data > self.infrared_sensor.threshold
+            self.gas_sensor_active = gas_level > self.gas_sensor.threshold
+            self.wind_sensor_active = wind_speed > self.wind_sensor.threshold_speed
+            self.humidity_sensor_active = humidity_level < self.humidity_sensor.threshold
+            self.temperature_probe_active = temperature > self.temperature_probe.threshold
+            self.fire_radiometer_active = fire_intensity > self.fire_radiometer.threshold
+
             # Check if all values are above their thresholds
             above_threshold_count = sum([
-                self.anemometer_active,
-                self.barometer_active,
-                self.hygrometer_active,
-                self.thermometer_active,
-                self.rain_gauge_active,
-                self.lightning_detector_active,
-                self.doppler_radar_active,
-                self.storm_surge_sensor_active
+                self.smoke_particle_sensor_active,
+                self.infrared_sensor_active,
+                self.gas_sensor_active,
+                self.wind_sensor_active,
+                self.humidity_sensor_active,
+                self.temperature_probe_active,
+                self.fire_radiometer_active
             ])
-            if above_threshold_count >= 3:
-                print("🌀 " + device_name + ": The sensors indicate a hurricane is happening ✅")
+            if above_threshold_count >= 6:
+                print("🔥 " + device_name + ": The sensors indicate a wildfire is happening ✅")
             else:
-                print("🌀 " + device_name + ": The sensors indicate a hurricane is NOT happening ❌")
-            time.sleep(2)
+                print("🔥 " + device_name + ": The sensors indicate a wildfire is NOT happening ❌")
+            time.sleep(1)
 
+
+class SmokeParticleSensor:
+    def __init__(self, threshold):
+        self.threshold = threshold
+
+
+    def detect_smoke(self):
+        # Simulate smoke detection 
+        return random.randint(0, 100)
+
+
+class InfraredSensor:
+    def __init__(self, threshold):
+        self.threshold = threshold
+
+
+    def measure_infrared(self):
+        # Simulate infrared measurement
+        return random.uniform(0, 1)
+
+
+class GasSensor:
+    def __init__(self, threshold):
+        self.threshold = threshold
+
+
+    def detect_gas(self):
+        # Simulate gas detection 
+        return random.randint(0, 50)
+
+
+class WindSensor:
+    def __init__(self, threshold_speed):
+        self.threshold_speed = threshold_speed
+
+
+    def measure_wind(self):
+        # Simulate wind measurement 
+        return random.randint(0, 360), random.uniform(0, 10)
+
+
+class HumiditySensor:
+    def __init__(self, threshold):
+        self.threshold = threshold
+
+
+    def measure_humidity(self):
+        # Simulate humidity measurement 
+        return random.uniform(0, 100)
+
+
+class TemperatureProbe:
+    def __init__(self, threshold):
+        self.threshold = threshold
+
+
+    def measure_temperature(self):
+        # Simulate temperature measurement 
+        return random.uniform(-10, 40)
+
+
+class GPSTracker:
+    def get_location(self):
+        # Simulate GPS location 
+        return (random.uniform(-90, 90), random.uniform(-180, 180))
+
+
+class FireRadiometer:
+    def __init__(self, threshold):
+        self.threshold = threshold
+
+    def measure_fire_intensity(self):
+        # Simulate fire intensity measurement 
+        return random.uniform(0, 100)
+    
 
 # Discover all other devices on the network
 def discovery():
@@ -95,7 +158,7 @@ def discovery():
                     data, sender_address = discovery_socket.recvfrom(1024)
                     knownDevices[data.decode()] = sender_address
                 except socket.timeout:
-                     print("🌀 " + device_name + ": Connected to 33333 and known devices to me are " + str(knownDevices).replace("u'", "'"))
+                     print("🔥 " + device_name + ": Connected to 33333 and known devices to me are " + str(knownDevices).replace("u'", "'"))
 
             # Close socket to allow other devices to connect
             discovery_socket.close()
@@ -141,7 +204,7 @@ def handle_interests(message, address):
         interestForwards[interest_code] = address # add to list of unresolved interests
         # Check if requested data is in forwarding table
         if str(requested_device)+"/"+str(requested_data) in forwardingTable:
-            print("🌀 " + device_name + ": Sending requested data from table")
+            print("🔥 " + device_name + ": Sending requested data from table")
             device_socket.sendto(message.encode(), forwardingTable[str(requested_device)+"/"+str(requested_data)])
         # If the requested data is not in the forwarding table, perform flooding (contact all known devices)
         else:
@@ -179,7 +242,7 @@ def send_requested_data(message, address):
     requested_device = message.split('/')[2]
     requested_data = message.split('/')[3]
     # Package the data into a packet
-    data_response = "data"+"/"+str(interest_code)+"/"+str(requested_device)+"/"+str(getattr(hurricaneDevice, requested_data))
+    data_response = "data"+"/"+str(interest_code)+"/"+str(requested_device)+"/"+str(getattr(fireMonitor, requested_data))
     device_socket.sendto(data_response.encode(), address)
 
 
@@ -194,8 +257,7 @@ def receive_messages():
                 handle_interests(data.decode(), sender_address)
             elif data.decode().split('/')[0] == "data":
                 handle_data(data.decode(), sender_address)
-        except socket.error as e: continue
-
+        except ConnectionResetError as e: continue
 
 def parseArguments(parser):
     parser = argparse.ArgumentParser()
@@ -229,7 +291,7 @@ def main():
     signal.signal(signal.SIGINT, signal_handler)
 
     # Declare global variables
-    global hurricaneDevice
+    global fireMonitor
     global device_name
     global device_ip
     global device_port
@@ -245,7 +307,7 @@ def main():
     global device_socket
 
     # Initialise global variables
-    hurricaneDevice = HurricaneDevice()
+    fireMonitor = WildfireMonitor()
     device_name = arguments.device_name
     device_ip = arguments.device_ip
     device_port = arguments.device_port
@@ -260,8 +322,8 @@ def main():
     requestCodeNum = 0 # Request codes are for packets when sending messages and having a unique ID for each
     device_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # Socket for drone to communicate via UDP
     device_socket.bind((device_ip, device_port)) # Bind drone to specified unique port
-    print("🌀 " + device_name + ": socket connected via UDP.")
-    generate_data_thread = threading.Thread(target=hurricaneDevice.generate_sensor_data)
+    print("🔥 " + device_name + ": socket connected via UDP.")
+    generate_data_thread = threading.Thread(target=fireMonitor.read_sensors)
     discovery_thread = threading.Thread(target=discovery)
     receive_messages_thread = threading.Thread(target=receive_messages)
     generate_data_thread.start()
