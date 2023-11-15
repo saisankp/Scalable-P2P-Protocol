@@ -21,7 +21,7 @@ dataForwards = {}  # interest code: address
 requestCode = 0
 
 
-# Encryption key (Note: Replace this key with a more secure method of key management)
+# Encryption key - using 16 byte key for now- hence 16 characters(Note: Replace this key with a more secure method of key management)
 encryption_key = b'TestEncryptionKi'
 
 def encrypt_data(key, plaintext):
