@@ -124,8 +124,15 @@ def send_interest_packet(data, device):
                 device_socket.sendto(packet.encode(), knownDevices[devices])
     else:
         device_socket.sendto(packet.encode(), knownDevices[device])
+        time.sleep(.1)
+        # Check if the requested data has been received
+        if requestCode not in DataReceived:
+            # If not, perform flooding (contact all known devices)
+            print("No response from", device, "Performing flooding")
+            for devices in knownDevices:
+                device_socket.sendto(packet.encode(), knownDevices[devices])
+            time.sleep(.1)
     return requestCode
-
 
 # Handle an interest request coming from another device
 def handle_interests(message, address):
