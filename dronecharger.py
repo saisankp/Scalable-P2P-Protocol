@@ -13,7 +13,7 @@ import argparse
 
 class DroneCharger:
     def __init__(self):
-        self.gps = (70,-2) # Latitude, Longitude
+        self.gps = (60,-2) # Latitude, Longitude
         self.voltage = 0 # Volts
         self.temperature = 20 # Degrees celcius
         self.solar_power_charging_rate = 0 # Watt hour (Wh/m) 
@@ -46,16 +46,12 @@ class DroneCharger:
                 if(device.split("-")[0] == "Drone"):
                     # Send a request to this device
                     battery_level_code = send_interest_packet("battery_level", device)
-                    # Allow time for the interest packet to permeate through the network
-                    time.sleep(0.5)
                     # If the drone battery is low, get the GPS of the drone
                     if battery_level_code in DataReceived:
                         if float(DataReceived[battery_level_code]) < 80:
                             if not self.usage_status:
                                 print("🔌 " + device_name + ": I found a drone with a low battery of " + str(DataReceived[battery_level_code]) + "%")
                             gps_code = send_interest_packet("gps", device)
-                            # Allow time for the interest packet to permeate through the network
-                            time.sleep(0.5)
 
                             # Store the location of the drone with a low battery using regex
                             if gps_code in DataReceived:
@@ -72,15 +68,11 @@ class DroneCharger:
                     if self.usage_status:
                         # Get the GPS of a device from our known devices
                         gps_code = send_interest_packet("gps", device)
-                        # Allow time for the interest packet to permeate through the network
-                        time.sleep(0.5)
                         
                         # If the device is at the location of the charger when the charger is being used
                         if (math.sqrt((int(self.gps[0]) - location[0])**2 + (int(self.gps[1]) - location[1])**2)) <= 1:
                             # Get the battery level of the device
                             battery_level_code = send_interest_packet("battery_level", device)
-                            # Allow time for the interest packet to permeate through the network
-                            time.sleep(0.5)
 
                             # If we get back the battery level from the device and it is fully charged, 
                             # the charger is not being used anymore and the locking actuator is open
@@ -138,6 +130,13 @@ def send_interest_packet(data, device):
                 device_socket.sendto(packet.encode(), knownDevices[devices])
     else:
         device_socket.sendto(packet.encode(), knownDevices[device])
+        time.sleep(.1)
+        # Check if the requested data has been received
+        if requestCode not in DataReceived:
+            # If not, perform flooding (contact all known devices)
+            for devices in knownDevices:
+                device_socket.sendto(packet.encode(), knownDevices[devices])
+            time.sleep(.1)
     return requestCode
 
 
