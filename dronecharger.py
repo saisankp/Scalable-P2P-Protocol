@@ -78,7 +78,7 @@ class DroneCharger:
                                 # If we get back the battery level from the device and it is fully charged, 
                                 # the charger is not being used anymore and the locking actuator is open
                                 if battery_level_code in DataReceived:
-                                    if int(DataReceived[battery_level_code]) >= 100:
+                                    if float(DataReceived[battery_level_code]) >= 100:
                                         self.usage_status = False
                                         self.locking_actuator_status = False
 
