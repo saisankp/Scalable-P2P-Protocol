@@ -15,6 +15,7 @@ import argparse
 class Drone:
     def __init__(self):
         self.destination = (0,0) #The current target destination the drone is trying to go to
+        self.nearest_charger = (100,100) # Nearest charger to drone
         self.charging = False # If the drone is charging
         self.busy = False # If the drone is busy doing a task
         self.gps = (0, 0) # Latitude, Longitude
@@ -80,7 +81,10 @@ class Drone:
             # Check if the battery is low
             if(self.battery_level <= 35):
                 # The battery is low so the drone cannot be used for tasks
-                self.busy = True 
+                self.busy = True
+                self.earthquake = False
+                self.hurrcane = False
+                self.fire = False
                 if self.charging == False:
                     if self.battery_level <= 0:
                         # Drone battery ran out before it could find an available charger
@@ -112,8 +116,9 @@ class Drone:
                             if len(available_charger_locations) > 0:
                                 # Get the charger that is the least distance away (i.e. the closest)
                                 self.destination = get_min_distance(available_charger_locations, self.gps)
+                                self.nearest_charger = get_min_distance(available_charger_locations, self.gps)
                             # If the drone is at the charger, update our variables accordingly
-                            if not math.sqrt((self.gps[0] - self.destination[0])**2 + (self.gps[1] - self.destination[1])**2) > 1 and self.destination != (0,0):
+                            if not math.sqrt((self.gps[0] - self.nearest_charger[0])**2 + (self.gps[1] - self.nearest_charger[1])**2) > 1 and self.nearest_charger != (0,0):
                                 self.charging = True
 
             # If the drone has enough battery, it should attend to disasters
