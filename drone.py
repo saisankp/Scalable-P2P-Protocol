@@ -308,7 +308,7 @@ def discovery():
             connection_time = time.time()
 
             # Hold the connection for 5 seconds to listen for incoming discovery messages
-            while time.time() - connection_time < 5:
+            while time.time() - connection_time < 2:
                 try:
                     print("connected")
                     data, sender_address = discovery_socket.recvfrom(1024)
@@ -322,7 +322,7 @@ def discovery():
             device_socket.sendto(discovery_message.encode(), (discovery_ip[0], discovery_port))
         # Wait for 3 seconds before trying to discover more devices
         print("🛸 " + device_name + ": Devices to me are " + str(list(knownDevices.keys())).replace("u'", "'"))
-        time.sleep(2)
+        time.sleep(1)
 
 
 # Send an interest packet for a piece of data on a different device
