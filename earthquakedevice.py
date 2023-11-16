@@ -463,7 +463,7 @@ def send_requested_data(message, address):
     requested_device = message.split('/')[2]
     requested_data = message.split('/')[3]
     # Package the data into a packet
-    data_response = "data"+"/"+str(interest_code)+"/"+str(requested_device)+"/"+str(getattr(drone, requested_data))
+    data_response = "data"+"/"+str(interest_code)+"/"+str(requested_device)+"/"+str(getattr(datamonitor, requested_data))
     sender_name = get_sender_name(knownDevices,address[0],address[1])
     if sender_name != None:
         device_socket.sendto(encrypt(data_response, knownDevices[sender_name][1]).encode(), address)
