@@ -152,7 +152,7 @@ def discovery():
             device_socket.sendto(discovery_message.encode(), (discovery_ip[0], discovery_port))
         # Wait for 3 seconds before trying to discover more devices
         print("🛸 " + device_name + ": Known devices to me are " + str(list(knownDevices.keys())).replace("u'", "'"))
-        time.sleep(2)
+        time.sleep(1)
 
 
 # Send an interest packet for a piece of data on a different device
