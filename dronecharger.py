@@ -42,44 +42,47 @@ class DroneCharger:
                 print("🔌 " + device_name + ": I am NOT currently charging a drone ❌")
 
             # Try to find a drones that have low battery from our known devices
-            for device in knownDevices:
-                if(device.split("-")[0] == "Drone"):
-                    # Send a request to this device
-                    battery_level_code = send_interest_packet("battery_level", device)
-                    # If the drone battery is low, get the GPS of the drone
-                    if battery_level_code in DataReceived:
-                        if float(DataReceived[battery_level_code]) < 80:
-                            if not self.usage_status:
-                                print("🔌 " + device_name + ": I found a drone with a low battery of " + str(DataReceived[battery_level_code]) + "%")
+            try:
+                for device in knownDevices:
+                    if(device.split("-")[0] == "Drone"):
+                        # Send a request to this device
+                        battery_level_code = send_interest_packet("battery_level", device)
+                        # If the drone battery is low, get the GPS of the drone
+                        if battery_level_code in DataReceived:
+                            if float(DataReceived[battery_level_code]) < 80:
+                                if not self.usage_status:
+                                    print("🔌 " + device_name + ": I found a drone with a low battery of " + str(DataReceived[battery_level_code]) + "%")
+                                gps_code = send_interest_packet("gps", device)
+
+                                # Store the location of the drone with a low battery using regex
+                                if gps_code in DataReceived:
+                                    location = re.findall(r'-?\d+\.\d+|-?\d+', DataReceived[gps_code])
+                                    location = [float(i) for i in location]
+
+                                    #If the drone has arrived at the location of the charger
+                                    if (math.sqrt((int(self.gps[0]) - location[0])**2 + (int(self.gps[1]) - location[1])**2)) <= 1:
+                                        # Charger is being used and the locking actuator is closed
+                                        self.usage_status = True
+                                        self.locking_actuator_status = True
+
+                        # If the charger is being used
+                        if self.usage_status:
+                            # Get the GPS of a device from our known devices
                             gps_code = send_interest_packet("gps", device)
+                            
+                            # If the device is at the location of the charger when the charger is being used
+                            if (math.sqrt((int(self.gps[0]) - location[0])**2 + (int(self.gps[1]) - location[1])**2)) <= 1:
+                                # Get the battery level of the device
+                                battery_level_code = send_interest_packet("battery_level", device)
 
-                            # Store the location of the drone with a low battery using regex
-                            if gps_code in DataReceived:
-                                location = re.findall(r'-?\d+\.\d+|-?\d+', DataReceived[gps_code])
-                                location = [float(i) for i in location]
+                                # If we get back the battery level from the device and it is fully charged, 
+                                # the charger is not being used anymore and the locking actuator is open
+                                if battery_level_code in DataReceived:
+                                    if int(DataReceived[battery_level_code]) >= 100:
+                                        self.usage_status = False
+                                        self.locking_actuator_status = False
 
-                                #If the drone has arrived at the location of the charger
-                                if (math.sqrt((int(self.gps[0]) - location[0])**2 + (int(self.gps[1]) - location[1])**2)) <= 1:
-                                    # Charger is being used and the locking actuator is closed
-                                    self.usage_status = True
-                                    self.locking_actuator_status = True
-
-                    # If the charger is being used
-                    if self.usage_status:
-                        # Get the GPS of a device from our known devices
-                        gps_code = send_interest_packet("gps", device)
-                        
-                        # If the device is at the location of the charger when the charger is being used
-                        if (math.sqrt((int(self.gps[0]) - location[0])**2 + (int(self.gps[1]) - location[1])**2)) <= 1:
-                            # Get the battery level of the device
-                            battery_level_code = send_interest_packet("battery_level", device)
-
-                            # If we get back the battery level from the device and it is fully charged, 
-                            # the charger is not being used anymore and the locking actuator is open
-                            if battery_level_code in DataReceived:
-                                if int(DataReceived[battery_level_code]) >= 100:
-                                    self.usage_status = False
-                                    self.locking_actuator_status = False
+            except RuntimeError as e: continue
             # Wait one second before trying to find a new drone with a low battery again
             time.sleep(1)
 
