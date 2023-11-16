@@ -124,7 +124,7 @@ def discovery():
     while True:
         discovery_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         discovery_message = device_name+"/"+(public_key.replace("/", "_SLASH_"))
-        for i in range(len(discovery_ip)): # add the 1 back in here
+        for i in range(1,len(discovery_ip)): # add the 1 back in here
             device_socket.sendto(discovery_message.encode(), (discovery_ip[i], discovery_port))
         try:
             # Check if port is available
