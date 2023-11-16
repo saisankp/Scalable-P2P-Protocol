@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 
 import time
 import socket
@@ -10,16 +11,10 @@ import sys
 import subprocess
 import numpy as np
 import argparse
-from cryptography.hazmat.primitives.asymmetric import rsa
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives import hashes
-from cryptography.hazmat.primitives.asymmetric import padding
-from cryptography.hazmat.backends import default_backend
 
 class Drone:
     def __init__(self):
         self.destination = (0,0) #The current target destination the drone is trying to go to
-        self.nearest_charger = (100,100) # Nearest available charger
         self.charging = False # If the drone is charging
         self.busy = False # If the drone is busy doing a task
         self.gps = (0, 0) # Latitude, Longitude
@@ -38,16 +33,15 @@ class Drone:
         while True:
             # Move the drone towards the destination
             self.update_gps()
-            print("🛸 " + device_name + ": current location is " + str(self.gps))
+            print("🛸 " + device_name + ": Current location is " + str(self.gps))
             if not self.charging:
-                self.battery_level -= 5 # Battery level goes down over time
-                print("🛸 " + device_name + ": current battery percentage is " + str(self.battery_level))
+                self.battery_level -= 0.5 # Battery level goes down over time
+                print("🛸 " + device_name + ": Current battery percentage is " + str(self.battery_level) + "%")
             else: 
                 self.battery_level += 10 # If charging, the battery goes up
-                print("🛸 " + device_name + ": currently charging with a battery percentage of " + str(self.battery_level) + "% 🔋")
                 if self.battery_level >= 100:
                     # The drone is fully charged hence we update our variables
-                    print("🛸 " + device_name + ": fully charged now! ⚡")
+                    print("🛸 " + device_name + ": Fully charged now! ⚡🔋")
                     self.charging = False
                     self.busy = False
                     self.destination = (0,0)
@@ -67,7 +61,7 @@ class Drone:
     def update_gps(self):
         # Move towards destination if not already there (using the pythagorean theorem)
         if math.sqrt((self.gps[0] - self.destination[0])**2 + (self.gps[1] - self.destination[1])**2) > 1:
-            print("🛸 " + device_name + ": current target destination is  " + str(self.destination))
+            print("🛸 " + device_name + ": Current target destination is  " + str(self.destination))
             angle = math.atan2(self.destination[1] - self.gps[1], self.destination[0] - self.gps[0])
             distance = math.sqrt((self.destination[0] - self.gps[0])**2 + (self.destination[1] - self.gps[1])**2)
             # Calculate step sizes based on distance
@@ -80,14 +74,19 @@ class Drone:
 
     def drone_logic(self):
         while True:
+            if self.charging:
+                print("🛸 " + device_name + ": Currently charging with a battery percentage of " + str(self.battery_level) + "% 🔋")
+                time.sleep(1)
             # Check if the battery is low
-            if(self.battery_level <= 25):
+            if(self.battery_level <= 35):
                 # The battery is low so the drone cannot be used for tasks
                 self.busy = True 
-                self.earthquake = False
-                self.hurrcane = False
-                self.fire = False
                 if self.charging == False:
+                    if self.battery_level <= 0:
+                        # Drone battery ran out before it could find an available charger
+                        print("🛸 " + device_name + ": My battery ran out. I'm dead.")
+                        subprocess.check_output(['kill', '-9', str(os.getpid())])
+                    print("🛸 " + device_name + ": My battery is dangerously low. Ignoring all tasks to find a charger")
                     # Try to find a charger
                     available_charger_locations = []
                     for device in knownDevices:
@@ -102,27 +101,27 @@ class Drone:
                             if usage_status_code in DataReceived and usage_voltage_code in DataReceived and temperature_code in DataReceived and locking_actuator_code in DataReceived:
                                 if DataReceived[usage_status_code] == "False" and DataReceived[usage_voltage_code] == "17" and int(DataReceived[temperature_code]) < 40 and DataReceived[locking_actuator_code] == "False":
                                     gps_code = send_interest_packet("gps", device)
+                                    print("🛸 " + device_name + ": Found a drone charger to charge at!")
                                     # If we receive an answer from the charger which states its GPS location, then we set our destination with it
                                     if gps_code in DataReceived:
                                         # Extract location from string using regex
                                         location = re.findall(r'-?\d+\.\d+|-?\d+', DataReceived[gps_code])
                                         available_charger_locations.append([float(i) for i in location])
                     
-                    # If the amount of available chargers is greater than zero
-                    if len(available_charger_locations) > 0:
-                        # Get the charger that is the least distance away (i.e. the closest)
-                        self.destination = get_min_distance(available_charger_locations, self.gps)
-                        self.nearest_charger = get_min_distance(available_charger_locations, self.gps)
-                    # If the drone is at the charger, update our variables accordingly
-                    if not math.sqrt((self.gps[0] - self.nearest_charger[0])**2 + (self.gps[1] - self.nearest_charger[1])**2) > 1 and self.nearest_charger != (0,0):
-                        self.charging = True
-                     
+                            # If the amount of available chargers is greater than zero
+                            if len(available_charger_locations) > 0:
+                                # Get the charger that is the least distance away (i.e. the closest)
+                                self.destination = get_min_distance(available_charger_locations, self.gps)
+                            # If the drone is at the charger, update our variables accordingly
+                            if not math.sqrt((self.gps[0] - self.destination[0])**2 + (self.gps[1] - self.destination[1])**2) > 1 and self.destination != (0,0):
+                                self.charging = True
 
             # If the drone has enough battery, it should attend to disasters
             if not self.busy:
                 # Check earthquake sensors
                 for device in knownDevices:
                     if device.split("-")[0] == "WildfireDevice":
+                        print("whoa")
                         smoke_particle_sensor_code = send_interest_packet("smoke_particle_sensor_active", device)
                         infrared_sensor_code = send_interest_packet("infrared_sensor_active", device)
                         gas_sensor_code = send_interest_packet("gas_sensor_active", device)
@@ -138,10 +137,9 @@ class Drone:
                                     # A wildfire has been detected. Mark the drone as busy and ask for the wildfire sensor's GPS location.
                                 gps_code = send_interest_packet("gps", device)
                                 self.busy = True # Mark drone as busy
-                                print("🛸 " + device_name + ": informed of a detected wildfire 🔥")
-
+                                print("🛸 " + device_name + ": Informed of a detected wildfire 🔥")
                                 if gps_code in DataReceived:
-                                    # extract numbers from string
+                                    # Extract numbers from string
                                     location = re.findall(r'-?\d+\.\d+|-?\d+', DataReceived[gps_code])
                                     self.destination = ([float(i) for i in location])
                                     self.fire = True
@@ -160,13 +158,12 @@ class Drone:
                         
                         # Check if at least half of the sensors are detecting an hurricane
                         if all(key in DataReceived for key in sensor_codes):
-                            if [(DataReceived[anemometer_code]),(DataReceived[barometer_code]),(DataReceived[hygrometer_code]),(DataReceived[thermometer_code]),(DataReceived[rain_gauge_code]),(DataReceived[lightning_detector_code]),(DataReceived[doppler_radar_code]), (DataReceived[storm_surge_sensor_code])].count("True") >= 3:
+                            if [(DataReceived[anemometer_code]),(DataReceived[barometer_code]),(DataReceived[hygrometer_code]),(DataReceived[thermometer_code]),(DataReceived[rain_gauge_code]),(DataReceived[lightning_detector_code]),(DataReceived[doppler_radar_code]), (DataReceived[storm_surge_sensor_code])].count("True") >= 4:
                                 gps_code = send_interest_packet("gps", device)
                                 self.busy = True # mark drone as busy
-                                print("🛸 " + device_name + ": informed of a detected hurricane 🌀")
-
+                                print("🛸 " + device_name + ": Informed of a detected hurricane 🌀")
                                 if gps_code in DataReceived:
-                                    # extract numbers from string
+                                    # Extract numbers from string
                                     location = re.findall(r'-?\d+\.\d+|-?\d+', DataReceived[gps_code])
                                     self.destination = ([float(i) for i in location])
                                     self.hurricane = True
@@ -185,12 +182,11 @@ class Drone:
 
                         # Check if at least half of the sensors are detecting an earthquake (to stop false positive reactions)
                         if all(key in DataReceived for key in sensor_codes):
-                            if sum([bool(DataReceived[seismometer_code]),bool(DataReceived[accelerometer_code]),bool(DataReceived[inclinometer_code]),bool(DataReceived[acounsticsensor_code]),bool(DataReceived[straingauge_code]),bool(DataReceived[pwavesensor_code]),bool(DataReceived[swavesensor_code])]) > 2:
+                            if [(DataReceived[seismometer_code]),(DataReceived[accelerometer_code]),(DataReceived[inclinometer_code]),(DataReceived[acounsticsensor_code]),(DataReceived[straingauge_code]),(DataReceived[pwavesensor_code]),(DataReceived[swavesensor_code])].count("True") >= 1:
                                 # An earthquake has been detected. Mark the drone as busy and ask for the earthquake device's GPS location.
                                 gps_code = send_interest_packet("gps", device)
                                 self.busy = True
-                                print("🛸 " + device_name + ": informed of a detected earthquake 🌋")
-                                
+                                print("🛸 " + device_name + ": Informed of a detected earthquake 🌋")
                                 # If we get a response from the earthquake device for its GPS location, the drone should go to the disaster location
                                 if gps_code in DataReceived:
                                     # Extract location from string using regex
@@ -211,7 +207,7 @@ class Drone:
                     self.speaker_status = False
 
             # Check if the drone is at the earthquake location
-            elif not math.sqrt((self.gps[0] - self.destination[0])**2 + (self.gps[1] - self.destination[1])**2) > 1 and self.destination != (0,0):
+            elif not math.sqrt((self.gps[0] - self.destination[0])**2 + (self.gps[1] - self.destination[1])**2) > 1  and self.destination != (0,0):
                 if self.earthquake:
                     print("🛸 " + device_name + ": Arrived at earthquake location. Using actuators...📟")
                     self.payload_release = True
@@ -222,6 +218,7 @@ class Drone:
                     print("🛸 " + device_name + ": Speaker is on 🔊")
                     # Disaster has passed
                     self.earthquake = False
+                    print("🛸 " + device_name + ": My job is done. I'm going back to base 🏠")
 
                 elif self.hurricane:
                     print("🛸 " + device_name + ": Arrived at hurricane location. Using actuators...📟")
@@ -233,21 +230,24 @@ class Drone:
                     print("🛸 " + device_name + ": Speaker is on 🔊")
                     # Disaster has passed
                     self.hurrcane = False
+                    print("🛸 " + device_name + ": My job is done. I'm going back to base 🏠")
 
                 elif self.fire:
                     print("🛸 " + device_name + ": Arrived at hurricane location. Using actuators...📟")
                     self.water_release = True
-                    print("🛸 " + device_name + ": water released 🧯")
+                    print("🛸 " + device_name + ": Water released 🧯")
                     self.payload_release = True
                     print("🛸 " + device_name + ": Payload released 📦")
                     self.flashlight_status = True
                     print("🛸 " + device_name + ": Flashlight is on 🔦")
                     self.speaker_status = True
                     print("🛸 " + device_name + ": Speaker is on 🔊")
+                    # Disaster has passed
                     self.fire = False
+                    print("🛸 " + device_name + ": My job is done. I'm going back to base 🏠")
 
-            # Wait two seconds before trying to cater for a disaster again
-            time.sleep(2)
+            # Wait 1 second before trying to cater for a disaster again
+            time.sleep(1)
 
 
 # Use pythagorean theorem to find the minimum distance to a location (whether it is a drone charger, earthquake device etc)
@@ -258,49 +258,13 @@ def get_min_distance(locations, drone_position):
     return locations[np.argmin(distances)]
 
 
-def generate_keys():
-    private_key = rsa.generate_private_key(public_exponent=65537,key_size=2048,backend=default_backend())
-
-    # Extract the public key
-    public_key = private_key.public_key()
-
-    # Serialize keys to PEM format
-    private_key_str = private_key.private_bytes(encoding=serialization.Encoding.PEM,format=serialization.PrivateFormat.PKCS8,encryption_algorithm=serialization.NoEncryption()).decode('utf-8')
-    public_key_str = public_key.public_bytes(encoding=serialization.Encoding.PEM,format=serialization.PublicFormat.SubjectPublicKeyInfo).decode('utf-8')
-    
-    return public_key_str, private_key_str
-
-def encrypt(message, public_key_str):
-    # Load the public key from the transmitted string
-    public_key_bytes = public_key_str.encode('utf-8')
-    public_key = serialization.load_pem_public_key(public_key_bytes)
-
-    # Encrypt the message
-    ciphertext = public_key.encrypt(message.encode('utf-8'),padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),algorithm=hashes.SHA256(),label=None))
-
-    return ciphertext.hex()
-
-def decrypt(encrypted_message, private_key_str):
-    # Load the private key from the transmitted string
-    private_key_bytes = private_key_str.encode('utf-8')
-    private_key = serialization.load_pem_private_key(private_key_bytes, password=None)
-
-    # Decrypt the message
-    plaintext = private_key.decrypt(
-        bytes.fromhex(encrypted_message),
-        padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),algorithm=hashes.SHA256(),label=None)
-    )
-
-    return plaintext.decode('utf-8')
-
-
 # Discover all other devices on the network
 def discovery():
     while True:
         discovery_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        discovery_message = device_name+"/"+(public_key.replace("/", "_SLASH_"))
-        for i in range(1,len(discovery_ip)): # add the 1 back in here
-            device_socket.sendto(discovery_message.encode(), (discovery_ip[i], discovery_port))
+        discovery_message = device_name
+        for ip in range(1, len(discovery_ip)):
+            device_socket.sendto(discovery_message.encode(), (discovery_ip[ip], discovery_port))
         try:
             # Check if port is available
             discovery_socket.bind((discovery_ip[0], discovery_port))
@@ -308,20 +272,19 @@ def discovery():
             connection_time = time.time()
 
             # Hold the connection for 5 seconds to listen for incoming discovery messages
-            while time.time() - connection_time < 2:
+            while time.time() - connection_time < 5:
                 try:
-                    print("connected")
                     data, sender_address = discovery_socket.recvfrom(1024)
-                    knownDevices[data.decode().split('/')[0]] = [sender_address, (data.decode().split('/')[1]).replace("_SLASH_", "/")]
+                    knownDevices[data.decode()] = sender_address
                 except socket.timeout:
-                     print("🛸 " + device_name + ": Connected to 33333 and known devices to me are " + str(list(knownDevices.keys())).replace("u'", "'"))
+                     print("🛸 " + device_name + ": Connected to " + str(discovery_port) + " and my known devices are " + str(knownDevices).replace("u'", "'"))
+
             # Close socket to allow other devices to connect
             discovery_socket.close()
         except socket.error as e:
-            # Send discovery message to the receiver
             device_socket.sendto(discovery_message.encode(), (discovery_ip[0], discovery_port))
-        # Wait for 3 seconds before trying to discover more devices
-        print("🛸 " + device_name + ": Devices to me are " + str(list(knownDevices.keys())).replace("u'", "'"))
+                
+        # Wait for 1 seconds before trying to discover more devices
         time.sleep(1)
 
 
@@ -337,72 +300,68 @@ def send_interest_packet(data, device):
     if device == "none":
         # Check if data is in the forwarding table
         if str(device)+"/"+str(data) in forwardingTable:
-                device_socket.sendto(encrypt(packet, knownDevices[device][1]).encode(), forwardingTable[str(device)+"/"+str(data)])
+                device_socket.sendto(packet.encode(), forwardingTable[str(device)+"/"+str(data)])
         # If we have not seen this device before (from our forwarding table), perform flooding (contact all known devices)
         else:
             for devices in knownDevices:
-                device_socket.sendto(encrypt(packet, knownDevices[device][1]).encode(), knownDevices[devices][0])
+                device_socket.sendto(packet.encode(), knownDevices[devices])
     else:
-        device_socket.sendto(encrypt(packet, knownDevices[device][1]).encode(), knownDevices[device][0])
-        time.sleep(1)
+        device_socket.sendto(packet.encode(), knownDevices[device])
+        time.sleep(.1)
         # Check if the requested data has been received
         if requestCode not in DataReceived:
             # If not, perform flooding (contact all known devices)
-            print("No response from", device, "Performing flooding", requestCode)
+            print("🛸 " + device_name + ": No response from", device, "Performing flooding")
             for devices in knownDevices:
-                device_socket.sendto(encrypt(packet, knownDevices[devices][1]).encode(), knownDevices[devices][0])
-            time.sleep(1)
+                device_socket.sendto(packet.encode(), knownDevices[devices])
+            time.sleep(.1)
     return requestCode
 
 
 # Handle an interest request coming from another device
 def handle_interests(message, address):
-    sender_name = get_sender_name(knownDevices,address[0],address[1])
-    if sender_name != None:
-        interest_code = message.split('/')[1]
-        requested_device = message.split('/')[2]
-        requested_data = message.split('/')[3]
-        # If this is the requested device, send the info
-        if requested_device == device_name:
-            send_requested_data(message, address)
+    interest_code = message.split('/')[1]
+    requested_device = message.split('/')[2]
+    requested_data = message.split('/')[3]
+    # If this is the requested device, send the info
+    if requested_device == device_name:
+        send_requested_data(message, address)
 
-        # Otherwise, forward the packet if it hasnt been already
-        elif interest_code not in interestForwards:
-            interestForwards[interest_code] = sender_name # add to list of unresolved interests
-            # Check if requested data is in forwarding table
-            if str(requested_device)+"/"+str(requested_data) in forwardingTable:
-                print("🛸 " + device_name + ": Sending requested data from table")
-                device_socket.sendto(encrypt(message, knownDevices[sender_name][1]).encode(), forwardingTable[str(requested_device)+"/"+str(requested_data)])
-            # If the requested data is not in the forwarding table, perform flooding (contact all known devices)
-            else:
-                for device in knownDevices:
-                    if knownDevices[device] != address: # Make sure to not send the interest back to the sender
-                        device_socket.sendto(encrypt(message, knownDevices[device][1]).encode(), knownDevices[device][0])
+    # Otherwise, forward the packet if it hasnt been already
+    elif interest_code not in interestForwards:
+        interestForwards[interest_code] = address # add to list of unresolved interests
+        # Check if requested data is in forwarding table
+        if str(requested_device)+"/"+str(requested_data) in forwardingTable:
+            print("🛸 " + device_name + ": Sending requested data from table")
+            device_socket.sendto(message.encode(), forwardingTable[str(requested_device)+"/"+str(requested_data)])
+        # If the requested data is not in the forwarding table, perform flooding (contact all known devices)
+        else:
+            for device in knownDevices:
+                if knownDevices[device] != address: # Make sure to not send the interest back to the sender
+                    device_socket.sendto(message.encode(), knownDevices[device])
 
 
 # Handle data coming from a device
 def handle_data(message, address):
-    sender_name = get_sender_name(knownDevices,address[0],address[1])
-    if sender_name != None:
-        interest_code = message.split('/')[1]
-        requested_device = message.split('/')[2]
-        requested_data = message.split('/')[3]
-        # Add sender to forwarding table
-        forwardingTable[str(requested_device)+"/"+str(requested_data)] = sender_name
-        # If interest request was made by this device
-        if interest_code in interestRequests:
-            DataReceived[interest_code] = requested_data
-            del interestRequests[interest_code]
-        # If interest request was made by another device, forward to the correct device
-        elif interest_code in interestForwards:
-            device_socket.sendto(encrypt(message, knownDevices[interestForwards[interest_code]][1]).encode(), knownDevices[interestForwards[interest_code]][0])
-            del interestForwards[interest_code]
-        # If the data has not been requested, perform flooding
-        elif interest_code not in dataForwards:
-            dataForwards[interest_code] = requested_data
-            for device in knownDevices:
-                    if knownDevices[device] != address: # Make sure you don't send the interest back to the sender
-                        device_socket.sendto(encrypt(message, knownDevices[sender_name][1]).encode(), knownDevices[device][0])
+    interest_code = message.split('/')[1]
+    requested_device = message.split('/')[2]
+    requested_data = message.split('/')[3]
+    # Add sender to forwarding table
+    forwardingTable[str(requested_device)+"/"+str(requested_data)] = address
+    # If interest request was made by this device
+    if interest_code in interestRequests:
+        DataReceived[interest_code] = requested_data
+        del interestRequests[interest_code]
+    # If interest request was made by another device, forward to the correct device
+    elif interest_code in interestForwards:
+        device_socket.sendto(message.encode(), interestForwards[interest_code])
+        del interestForwards[interest_code]
+    # If the data has not been requested, perform flooding
+    elif interest_code not in dataForwards:
+        dataForwards[interest_code] = requested_data
+        for device in knownDevices:
+                if knownDevices[device] != address: # Make sure you don't send the interest back to the sender
+                    device_socket.sendto(message.encode(), knownDevices[device])
 
 
 # Send requested data to an address
@@ -412,35 +371,21 @@ def send_requested_data(message, address):
     requested_data = message.split('/')[3]
     # Package the data into a packet
     data_response = "data"+"/"+str(interest_code)+"/"+str(requested_device)+"/"+str(getattr(drone, requested_data))
-    sender_name = get_sender_name(knownDevices,address[0],address[1])
-    if sender_name != None:
-        device_socket.sendto(encrypt(data_response, knownDevices[sender_name][1]).encode(), address)
-
-
-def get_sender_name(dictionary, target_ip, target_port):
-    for sender_name, (address, key) in dictionary.items():
-        if address[0] == target_ip and address[1] == target_port:
-            return sender_name
-    return None
+    device_socket.sendto(data_response.encode(), address)
 
 
 # Recieve messages from other devices
 def receive_messages():
     while True:
         try:
-           # Wait until we receive a message through the socket
-            data_encrypted, sender_address = device_socket.recvfrom(1024)
-            # Check if sender is a known device
-            sender = get_sender_name(knownDevices, sender_address[0], sender_address[1])
-            if sender!= None:
-                data_decrypted = decrypt(data_encrypted.decode(), private_key)
-
-                # Check if the message is an interest request or data
-                if data_decrypted.split('/')[0] == "interest":
-                    handle_interests(data_decrypted, sender_address)
-                elif data_decrypted.split('/')[0] == "data":
-                    handle_data(data_decrypted, sender_address)
-        except ConnectionResetError as e: continue
+            # Wait until we receive a message through the socket
+            data, sender_address = device_socket.recvfrom(1024)
+            # Check if the message is an interest request or data
+            if data.decode().split('/')[0] == "interest":
+                handle_interests(data.decode(), sender_address)
+            elif data.decode().split('/')[0] == "data":
+                handle_data(data.decode(), sender_address)
+        except socket.error as e: continue
 
 
 def parseArguments(parser):
@@ -454,7 +399,7 @@ def parseArguments(parser):
     }
 
     for argument, (description, argument_type) in argumentsAndDescriptions.items():
-        parser.add_argument(argument, help=description, type=argument_type)
+        parser.add_argument(argument, nargs='+', help=description, type=argument_type)
 
     arguments = parser.parse_args()
 
@@ -490,22 +435,19 @@ def main():
     global DataReceived
     global requestCodeNum
     global device_socket
-    global public_key
-    global private_key
 
     # Initialise global variables
     drone = Drone()
-    public_key, private_key =generate_keys()
-    device_name = arguments.device_name
-    device_ip = arguments.device_ip
-    device_port = arguments.device_port
+    device_name = arguments.device_name[0]
+    device_ip = arguments.device_ip[0]
+    device_port = arguments.device_port[0]
     discovery_ip = arguments.discovery_ip
-    discovery_port = arguments.discovery_port
-    knownDevices = {} # Known devices are stored as device: (ip, port), public key
+    discovery_port = arguments.discovery_port[0]
+    knownDevices = {} # Known devices are stored as device: (ip, port)
     forwardingTable = {} # In the format of address: device + "/" + data
-    interestForwards = {} # In the format of interest code: sender name
+    interestForwards = {} # In the format of interest code: address
     interestRequests = {} # Rrepresents the interest codes generated by this device
-    dataForwards = {} # In the format of interest code: sender name
+    dataForwards = {} # In the format of interest code: address
     DataReceived = {} # In the format of interest code: data
     requestCodeNum = 0 # Request codes are for packets when sending messages and having a unique ID for each
     device_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # Socket for drone to communicate via UDP
