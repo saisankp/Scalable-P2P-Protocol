@@ -464,7 +464,7 @@ def main():
     # Declare thread for the drone logic (if the battery hits a threshold it tries to find a charger, otherwise it helps other sensors)
     drone_logic_thread = threading.Thread(target=drone.drone_logic)
     # Declare thread for discovery (to inform every other node it exists at the start)
-    discovery_thread = threading.Thread(target=discovery(public_key, private_key))
+    discovery_thread = threading.Thread(target=discovery)
     # Declare thread for receiving messages from other nodes
     receive_messages_thread = threading.Thread(target=receive_messages)
 

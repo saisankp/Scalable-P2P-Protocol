@@ -9,7 +9,6 @@ import math
 import signal
 import subprocess
 import argparse
-from cryptography import encrypt, decrypt
 
 
 class DroneCharger:
@@ -292,7 +291,7 @@ def main():
     # Declare thread for the charger logic (if the battery of a known drone hits a threshold it communicates with it)
     charger_logic_thread = threading.Thread(target=drone_charger.charger_logic)
     # Declare thread for discovery (to inform every other node it exists at the start)
-    discovery_thread = threading.Thread(target=discovery(public_key, private_key))
+    discovery_thread = threading.Thread(target=discovery)
     # Declare thread for receiving messages from other nodes
     receive_messages_thread = threading.Thread(target=receive_messages)
 
