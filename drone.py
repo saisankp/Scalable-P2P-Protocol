@@ -11,7 +11,6 @@ import sys
 import subprocess
 import numpy as np
 import argparse
-from cryptography import encrypt, decrypt
 
 class Drone:
     def __init__(self):
