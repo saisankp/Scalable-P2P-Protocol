@@ -9,6 +9,7 @@ import math
 import signal
 import subprocess
 import argparse
+from cryptography import encrypt, decrypt
 
 
 class DroneCharger:
@@ -103,7 +104,7 @@ def discovery():
                     data, sender_address = discovery_socket.recvfrom(1024)
                     knownDevices[data.decode()] = sender_address
                 except socket.timeout:
-                   print("🔌  " + device_name + ": Connected to " + str(discovery_port) + " and my known devices are " + str(knownDevices).replace("u'", "'"))
+                    print("🔌 " + device_name + ": Connected to " + str(discovery_port) + " and my known devices are " + str(knownDevices).replace("u'", "'"))
 
             # Close socket to allow other devices to connect
             discovery_socket.close()
@@ -279,12 +280,19 @@ def main():
     device_socket.bind((device_ip, device_port)) # Bind drone to specified unique port
     print("🔌  " + device_name + ": socket connected via UDP.")
 
+
+    with open("keys/public_key.pem", "r") as pub_file:
+        public_key = pub_file.read()
+
+    with open("keys/private_key.pem", "r") as prv_file:
+        private_key = prv_file.read()
+
     # Declare thread for the sensor data simulation (sensor data changing)
     sensor_data_thread = threading.Thread(target=drone_charger.simulate_sensor_data)
     # Declare thread for the charger logic (if the battery of a known drone hits a threshold it communicates with it)
     charger_logic_thread = threading.Thread(target=drone_charger.charger_logic)
     # Declare thread for discovery (to inform every other node it exists at the start)
-    discovery_thread = threading.Thread(target=discovery)
+    discovery_thread = threading.Thread(target=discovery(public_key, private_key))
     # Declare thread for receiving messages from other nodes
     receive_messages_thread = threading.Thread(target=receive_messages)
 

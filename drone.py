@@ -11,6 +11,7 @@ import sys
 import subprocess
 import numpy as np
 import argparse
+from cryptography import encrypt, decrypt
 
 class Drone:
     def __init__(self):
@@ -121,7 +122,6 @@ class Drone:
                 # Check earthquake sensors
                 for device in knownDevices:
                     if device.split("-")[0] == "WildfireDevice":
-                        print("whoa")
                         smoke_particle_sensor_code = send_interest_packet("smoke_particle_sensor_active", device)
                         infrared_sensor_code = send_interest_packet("infrared_sensor_active", device)
                         gas_sensor_code = send_interest_packet("gas_sensor_active", device)
@@ -277,7 +277,7 @@ def discovery():
                     data, sender_address = discovery_socket.recvfrom(1024)
                     knownDevices[data.decode()] = sender_address
                 except socket.timeout:
-                     print("🛸 " + device_name + ": Connected to " + str(discovery_port) + " and my known devices are " + str(knownDevices).replace("u'", "'"))
+                    print("🛸 " + device_name + ": Connected to " + str(discovery_port) + " and my known devices are " + str(knownDevices).replace("u'", "'"))
 
             # Close socket to allow other devices to connect
             discovery_socket.close()
@@ -454,12 +454,18 @@ def main():
     device_socket.bind((device_ip, device_port)) # Bind drone to specified unique port
     print("🛸 " + device_name + ": socket connected via UDP.")
 
+    with open("keys/public_key.pem", "r") as pub_file:
+        public_key = pub_file.read()
+
+    with open("keys/private_key.pem", "r") as prv_file:
+        private_key = prv_file.read()
+
     # Declare thread for the sensor data simulation (sensor data changing)
     sensor_data_thread = threading.Thread(target=drone.simulate_sensor_data)
     # Declare thread for the drone logic (if the battery hits a threshold it tries to find a charger, otherwise it helps other sensors)
     drone_logic_thread = threading.Thread(target=drone.drone_logic)
     # Declare thread for discovery (to inform every other node it exists at the start)
-    discovery_thread = threading.Thread(target=discovery)
+    discovery_thread = threading.Thread(target=discovery(public_key, private_key))
     # Declare thread for receiving messages from other nodes
     receive_messages_thread = threading.Thread(target=receive_messages)
 

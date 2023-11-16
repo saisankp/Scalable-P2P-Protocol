@@ -20,4 +20,5 @@ python -m pip install numpy
 # Install argeparse with pip
 python -m pip install argparse
 
-python -m pip install cryptography
+# Install pycrypto with pip
+python -m pip install pycrypto
