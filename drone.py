@@ -12,6 +12,7 @@ import subprocess
 import numpy as np
 import argparse
 
+
 class Drone:
     def __init__(self):
         self.destination = (0,0) #The current target destination the drone is trying to go to
@@ -36,7 +37,7 @@ class Drone:
             self.update_gps()
             print("🛸 " + device_name + ": Current location is " + str(self.gps))
             if not self.charging:
-                self.battery_level -= 0.5 # Battery level goes down over time
+                self.battery_level -= 3 # Battery level goes down over time
                 print("🛸 " + device_name + ": Current battery percentage is " + str(self.battery_level) + "%")
             else: 
                 self.battery_level += 10 # If charging, the battery goes up
