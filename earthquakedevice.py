@@ -13,6 +13,11 @@ import os
 import argparse
 import subprocess
 import signal
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.hazmat.backends import default_backend
 
 
 class Earthquake:
@@ -303,37 +308,77 @@ class DataMonitor:
             self.swavesensor_active = swavesensor.activated
 
 
+def generate_keys():
+    private_key = rsa.generate_private_key(public_exponent=65537,key_size=2048,backend=default_backend())
+
+    # Extract the public key
+    public_key = private_key.public_key()
+
+    # Serialize keys to PEM format
+    private_key_str = private_key.private_bytes(encoding=serialization.Encoding.PEM,format=serialization.PrivateFormat.PKCS8,encryption_algorithm=serialization.NoEncryption()).decode('utf-8')
+    public_key_str = public_key.public_bytes(encoding=serialization.Encoding.PEM,format=serialization.PublicFormat.SubjectPublicKeyInfo).decode('utf-8')
+    
+    return public_key_str, private_key_str
+
+def encrypt(message, public_key_str):
+    # Load the public key from the transmitted string
+    public_key_bytes = public_key_str.encode('utf-8')
+    public_key = serialization.load_pem_public_key(public_key_bytes)
+
+    # Encrypt the message
+    ciphertext = public_key.encrypt(message.encode('utf-8'),padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),algorithm=hashes.SHA256(),label=None))
+
+    return ciphertext.hex()
+
+def decrypt(encrypted_message, private_key_str):
+    # Load the private key from the transmitted string
+    private_key_bytes = private_key_str.encode('utf-8')
+    private_key = serialization.load_pem_private_key(private_key_bytes, password=None)
+
+    # Decrypt the message
+    plaintext = private_key.decrypt(
+        bytes.fromhex(encrypted_message),
+        padding.OAEP(mgf=padding.MGF1(algorithm=hashes.SHA256()),algorithm=hashes.SHA256(),label=None)
+    )
+
+    return plaintext.decode('utf-8')
+
+
 # Discover all other devices on the network
 def discovery():
     while True:
         discovery_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        discovery_message = device_name
+        discovery_message = device_name+"/"+(public_key.replace("/", "_SLASH_"))
+        for i in range(len(discovery_ip)): # add the 1 back in here
+            device_socket.sendto(discovery_message.encode(), (discovery_ip[i], discovery_port))
         try:
             # Check if port is available
-            discovery_socket.bind((discovery_ip, discovery_port))
+            discovery_socket.bind((discovery_ip[0], discovery_port))
             discovery_socket.settimeout(1)
             connection_time = time.time()
 
             # Hold the connection for 5 seconds to listen for incoming discovery messages
-            while time.time() - connection_time < 5:
+            while time.time() - connection_time < 2:
                 try:
+                    print("connected")
                     data, sender_address = discovery_socket.recvfrom(1024)
-                    knownDevices[data.decode()] = sender_address
+                    knownDevices[data.decode().split('/')[0]] = [sender_address, (data.decode().split('/')[1]).replace("_SLASH_", "/")]
                 except socket.timeout:
-                     print("🌋 " + device_name + ": Connected to 33333 and known devices to me are " + str(knownDevices).replace("u'", "'"))
-
+                     print("🛸 " + device_name + ": Connected to 33333 and known devices to me are " + str(list(knownDevices.keys())).replace("u'", "'"))
             # Close socket to allow other devices to connect
             discovery_socket.close()
         except socket.error as e:
             # Send discovery message to the receiver
-            device_socket.sendto(discovery_message.encode(), (discovery_ip, discovery_port))
+            device_socket.sendto(discovery_message.encode(), (discovery_ip[0], discovery_port))
         # Wait for 3 seconds before trying to discover more devices
-        time.sleep(3)
+        print("🛸 " + device_name + ": Known devices to me are " + str(list(knownDevices.keys())).replace("u'", "'"))
+        time.sleep(2)
 
 
 # Send an interest packet for a piece of data on a different device
 def send_interest_packet(data, device):
     global requestCodeNum
+    global DataReceived
     requestCodeNum = requestCodeNum + 1
     requestCode = str(device_name)+str(requestCodeNum)
     packet = "interest"+"/"+requestCode+"/"+str(device)+"/"+str(data)
@@ -342,68 +387,74 @@ def send_interest_packet(data, device):
     if device == "none":
         # Check if data is in the forwarding table
         if str(device)+"/"+str(data) in forwardingTable:
-                device_socket.sendto(packet.encode(), forwardingTable[str(device)+"/"+str(data)])
+                device_socket.sendto(encrypt(packet, knownDevices[device][1]).encode(), forwardingTable[str(device)+"/"+str(data)])
         # If we have not seen this device before (from our forwarding table), perform flooding (contact all known devices)
         else:
             for devices in knownDevices:
-                device_socket.sendto(packet.encode(), knownDevices[devices])
+                device_socket.sendto(encrypt(packet, knownDevices[device][1]).encode(), knownDevices[devices][0])
     else:
-        device_socket.sendto(packet.encode(), knownDevices[device])
-        time.sleep(.1)
+        device_socket.sendto(encrypt(packet, knownDevices[device][1]).encode(), knownDevices[device][0])
+        time.sleep(1)
         # Check if the requested data has been received
         if requestCode not in DataReceived:
             # If not, perform flooding (contact all known devices)
-            print("No response from", device, "Performing flooding")
-            for devices in knownDevices:
-                device_socket.sendto(packet.encode(), knownDevices[devices])
-            time.sleep(.1)
+            print("No response from", device, "Performing flooding", requestCode)
+            #for devices in knownDevices:
+                #device_socket.sendto(encrypt(packet, knownDevices[device][1]).encode(), knownDevices[devices][0])
+            time.sleep(1)
     return requestCode
 
 
 # Handle an interest request coming from another device
 def handle_interests(message, address):
-    interest_code = message.split('/')[1]
-    requested_device = message.split('/')[2]
-    requested_data = message.split('/')[3]
-    # If this is the requested device, send the info
-    if requested_device == device_name:
-        send_requested_data(message, address)
+    sender_name = get_sender_name(knownDevices,address[0],address[1])
+    if sender_name != None:
+        interest_code = message.split('/')[1]
+        requested_device = message.split('/')[2]
+        requested_data = message.split('/')[3]
+        # If this is the requested device, send the info
+        if requested_device == device_name:
+            send_requested_data(message, address)
 
-    # Otherwise, forward the packet if it hasnt been already
-    elif interest_code not in interestForwards:
-        interestForwards[interest_code] = address # add to list of unresolved interests
-        # Check if requested data is in forwarding table
-        if str(requested_device)+"/"+str(requested_data) in forwardingTable:
-            print("🌋 " + device_name + ": Sending requested data from table")
-            device_socket.sendto(message.encode(), forwardingTable[str(requested_device)+"/"+str(requested_data)])
-        # If the requested data is not in the forwarding table, perform flooding (contact all known devices)
-        else:
-            for device in knownDevices:
-                if knownDevices[device] != address: # Make sure to not send the interest back to the sender
-                    device_socket.sendto(message.encode(), knownDevices[device])
+        # Otherwise, forward the packet if it hasnt been already
+        elif interest_code not in interestForwards:
+            print("Forwarding interest packet")
+            interestForwards[interest_code] = sender_name # add to list of unresolved interests
+            # Check if requested data is in forwarding table
+            if str(requested_device)+"/"+str(requested_data) in forwardingTable:
+                print("🛸 " + device_name + ": Sending requested data from table")
+                device_socket.sendto(encrypt(message, knownDevices[sender_name][1]).encode(), forwardingTable[str(requested_device)+"/"+str(requested_data)])
+            # If the requested data is not in the forwarding table, perform flooding (contact all known devices)
+            else:
+                for device in knownDevices:
+                    if knownDevices[device][0] != address: # Make sure to not send the interest back to the sender
+                        print("sending to device", knownDevices[device], knownDevices[device][0])
+                        device_socket.sendto(encrypt(message, knownDevices[device][1]).encode(), knownDevices[device][0])
 
 
 # Handle data coming from a device
 def handle_data(message, address):
-    interest_code = message.split('/')[1]
-    requested_device = message.split('/')[2]
-    requested_data = message.split('/')[3]
-    # Add sender to forwarding table
-    forwardingTable[str(requested_device)+"/"+str(requested_data)] = address
-    # If interest request was made by this device
-    if interest_code in interestRequests:
-        DataReceived[interest_code] = requested_data
-        del interestRequests[interest_code]
-    # If interest request was made by another device, forward to the correct device
-    elif interest_code in interestForwards:
-        device_socket.sendto(message.encode(), interestForwards[interest_code])
-        del interestForwards[interest_code]
-    # If the data has not been requested, perform flooding
-    elif interest_code not in dataForwards:
-        dataForwards[interest_code] = requested_data
-        for device in knownDevices:
-                if knownDevices[device] != address: # Make sure you don't send the interest back to the sender
-                    device_socket.sendto(message.encode(), knownDevices[device])
+    sender_name = get_sender_name(knownDevices,address[0],address[1])
+    if sender_name != None:
+        interest_code = message.split('/')[1]
+        requested_device = message.split('/')[2]
+        requested_data = message.split('/')[3]
+        # Add sender to forwarding table
+        forwardingTable[str(requested_device)+"/"+str(requested_data)] = sender_name
+        # If interest request was made by this device
+        if interest_code in interestRequests:
+            DataReceived[interest_code] = requested_data
+            del interestRequests[interest_code]
+        # If interest request was made by another device, forward to the correct device
+        elif interest_code in interestForwards:
+            device_socket.sendto(encrypt(message, knownDevices[interestForwards[interest_code]][1]).encode(), knownDevices[interestForwards[interest_code]][0])
+            del interestForwards[interest_code]
+        # If the data has not been requested, perform flooding
+        elif interest_code not in dataForwards:
+            dataForwards[interest_code] = requested_data
+            for device in knownDevices:
+                    if knownDevices[device] != address: # Make sure you don't send the interest back to the sender
+                        device_socket.sendto(encrypt(message, knownDevices[sender_name][1]).encode(), knownDevices[device][0])
 
 
 # Send requested data to an address
@@ -412,22 +463,36 @@ def send_requested_data(message, address):
     requested_device = message.split('/')[2]
     requested_data = message.split('/')[3]
     # Package the data into a packet
-    data_response = "data"+"/"+str(interest_code)+"/"+str(requested_device)+"/"+str(getattr(datamonitor, requested_data))
-    device_socket.sendto(data_response.encode(), address)
+    data_response = "data"+"/"+str(interest_code)+"/"+str(requested_device)+"/"+str(getattr(drone, requested_data))
+    sender_name = get_sender_name(knownDevices,address[0],address[1])
+    if sender_name != None:
+        device_socket.sendto(encrypt(data_response, knownDevices[sender_name][1]).encode(), address)
+
+
+def get_sender_name(dictionary, target_ip, target_port):
+    for sender_name, (address, key) in dictionary.items():
+        if address[0] == target_ip and address[1] == target_port:
+            return sender_name
+    return None
 
 
 # Recieve messages from other devices
 def receive_messages():
     while True:
         try:
-            # Wait until we receive a message through the socket
-            data, sender_address = device_socket.recvfrom(1024)
-            # Check if the message is an interest request or data
-            if data.decode().split('/')[0] == "interest":
-                handle_interests(data.decode(), sender_address)
-            elif data.decode().split('/')[0] == "data":
-                handle_data(data.decode(), sender_address)
-        except socket.error as e: continue
+           # Wait until we receive a message through the socket
+            data_encrypted, sender_address = device_socket.recvfrom(1024)
+            # Check if sender is a known device
+            sender = get_sender_name(knownDevices, sender_address[0], sender_address[1])
+            if sender!= None:
+                data_decrypted = decrypt(data_encrypted.decode(), private_key)
+
+                # Check if the message is an interest request or data
+                if data_decrypted.split('/')[0] == "interest":
+                    handle_interests(data_decrypted, sender_address)
+                elif data_decrypted.split('/')[0] == "data":
+                    handle_data(data_decrypted, sender_address)
+        except ConnectionResetError as e: continue
 
 
 def parseArguments(parser):
@@ -484,6 +549,8 @@ def main():
     global DataReceived
     global requestCodeNum
     global device_socket
+    global public_key
+    global private_key
 
     # Initialise global variables
     earthquake = Earthquake()
@@ -495,16 +562,17 @@ def main():
     seismometer = Seismometer()
     pwavesensor = PwaveSensor()
     swavesensor = SwaveSensor()
+    public_key, private_key =generate_keys()
     device_name = arguments.device_name
     device_ip = arguments.device_ip
     device_port = arguments.device_port
     discovery_ip = arguments.discovery_ip
     discovery_port = arguments.discovery_port
-    knownDevices = {} # Known devices are stored as device: (ip, port)
+    knownDevices = {} # Known devices are stored as device: (ip, port), public key
     forwardingTable = {} # In the format of address: device + "/" + data
-    interestForwards = {} # In the format of interest code: address
+    interestForwards = {} # In the format of interest code: sender name
     interestRequests = {} # Rrepresents the interest codes generated by this device
-    dataForwards = {} # In the format of interest code: address
+    dataForwards = {} # In the format of interest code: sender name
     DataReceived = {} # In the format of interest code: data
     requestCodeNum = 0 # Request codes are for packets when sending messages and having a unique ID for each
     device_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # Socket for drone to communicate via UDP
