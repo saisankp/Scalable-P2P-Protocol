@@ -37,10 +37,10 @@ class Drone:
             self.update_gps()
             print("🛸 " + device_name + ": Current location is " + str(self.gps))
             if not self.charging:
-                self.battery_level -= 3 # Battery level goes down over time
+                self.battery_level -= 2 # Battery level goes down over time
                 print("🛸 " + device_name + ": Current battery percentage is " + str(self.battery_level) + "%")
             else: 
-                self.battery_level += 10 # If charging, the battery goes up
+                self.battery_level += min(10, 100-self.battery_level) # If charging, the battery goes up
                 if self.battery_level >= 100:
                     # The drone is fully charged hence we update our variables
                     print("🛸 " + device_name + ": Fully charged now! ⚡🔋")
