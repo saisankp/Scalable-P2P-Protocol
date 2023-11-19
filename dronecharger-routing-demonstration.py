@@ -196,28 +196,31 @@ def handle_interests(message, address):
 
 # Handle data coming from a device
 def handle_data(message, address):
-    with open(os.path.join(KEYS_DIRECTORY, PRIVATE_KEY_FILENAME), "r") as prv_file:
-        private_key = prv_file.read()
+    if address != knownDevices["Drone-1"]:
+        with open(os.path.join(KEYS_DIRECTORY, PRIVATE_KEY_FILENAME), "r") as prv_file:
+            private_key = prv_file.read()
 
-    interest_code = decrypt(message, private_key).split('/')[1]
-    requested_device = decrypt(message, private_key).split('/')[2]
-    requested_data = decrypt(message, private_key).split('/')[3]
-    # Add sender to forwarding table
-    forwardingTable[str(requested_device)+"/"+str(requested_data)] = address
-    # If interest request was made by this device
-    if interest_code in interestRequests:
-        DataReceived[interest_code] = requested_data
-        del interestRequests[interest_code]
-    # If interest request was made by another device, forward to the correct device
-    elif interest_code in interestForwards:
-        device_socket.sendto(message, interestForwards[interest_code])
-        del interestForwards[interest_code]
-    # If the data has not been requested, perform flooding
-    elif interest_code not in dataForwards:
-        dataForwards[interest_code] = requested_data
-        for device in knownDevices:
-                if knownDevices[device] != address: # Make sure you don't send the interest back to the sender
-                    device_socket.sendto(message, knownDevices[device])
+        interest_code = decrypt(message, private_key).split('/')[1]
+        requested_device = decrypt(message, private_key).split('/')[2]
+        requested_data = decrypt(message, private_key).split('/')[3]
+        # Add sender to forwarding table
+        forwardingTable[str(requested_device)+"/"+str(requested_data)] = address
+        # If interest request was made by this device
+        if interest_code in interestRequests:
+            DataReceived[interest_code] = requested_data
+            del interestRequests[interest_code]
+        # If interest request was made by another device, forward to the correct device
+        elif interest_code in interestForwards:
+            device_socket.sendto(message, interestForwards[interest_code])
+            del interestForwards[interest_code]
+        # If the data has not been requested, perform flooding
+        elif interest_code not in dataForwards:
+            dataForwards[interest_code] = requested_data
+            for device in knownDevices:
+                    if knownDevices[device] != address: # Make sure you don't send the interest back to the sender
+                        device_socket.sendto(message, knownDevices[device])
+    else:
+        print("🔌 " + device_name + ": Blocked message from Drone-1")
 
 
 # Send requested data to an address
