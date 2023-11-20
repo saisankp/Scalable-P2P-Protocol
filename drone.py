@@ -37,7 +37,7 @@ class Drone:
             self.update_gps()
             print("🛸 " + device_name + ": Current location is " + str(self.gps))
             if not self.charging:
-                self.battery_level -= 5 # Battery level goes down over time
+                self.battery_level -= .5 # Battery level goes down over time
                 print("🛸 " + device_name + ": Current battery percentage is " + str(self.battery_level) + "%")
             else: 
                 self.battery_level += min(10, 100-self.battery_level) # If charging, the battery goes up
@@ -80,7 +80,7 @@ class Drone:
                 print("🛸 " + device_name + ": Currently charging with a battery percentage of " + str(self.battery_level) + "% 🔋")
                 time.sleep(1)
             # Check if the battery is low
-            if(self.battery_level <= 50):
+            if(self.battery_level <= 35):
                 # The battery is low so the drone cannot be used for tasks
                 self.busy = True
                 self.earthquake = False
