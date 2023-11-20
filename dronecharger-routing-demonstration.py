@@ -223,7 +223,6 @@ def send_requested_data(message, address):
     requested_device = decrypt(message, private_key).split('/')[2]
     requested_data = decrypt(message, private_key).split('/')[3]
     # Package the data into a packet
-    print(requested_data)
     data_response = "data"+"/"+str(interest_code)+"/"+str(requested_device)+"/"+str(getattr(drone_charger, requested_data))
     print("sent to" + str(address), str(getattr(drone_charger, requested_data)))
     device_socket.sendto(encrypt(data_response, knownPublicKeys[str(address)]), address)
