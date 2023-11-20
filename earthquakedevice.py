@@ -12,8 +12,7 @@ import os
 import argparse
 import subprocess
 import signal
-from cryptography import encrypt, decrypt
-from keys import KEYS_DIRECTORY, PUBLIC_KEY_FILENAME, PRIVATE_KEY_FILENAME
+from cryptography import generate_keys, encrypt, decrypt
 
 
 class Earthquake:
@@ -307,27 +306,24 @@ class EarthquakeDevice:
             self.straingauge_active,
             self.pwavesensor_active,
             self.swavesensor_active
-        ]
-            
-            if(activated_sensors.count(True) >= 1):
-                print("🌋 " + device_name + ": The sensors indicate an earthquake is happening ✅")
-            else:
-                print("🌋 " + device_name + ": The sensors indicate an earthquake is NOT happening ❌")
+            ]
+
+            # Device only sends sensor data to known devices
+            if len(knownDevices) > 0:
+                if(activated_sensors.count(True) >= 1):
+                    print("🌋 " + device_name + ": The sensors indicate an earthquake is happening ✅")
+                else:
+                    print("🌋 " + device_name + ": The sensors indicate an earthquake is NOT happening ❌")
 
 
-# Discover all other devices on the network
-def discovery():
-    with open(os.path.join(KEYS_DIRECTORY, PUBLIC_KEY_FILENAME), "r") as pub_file:
-        public_key = pub_file.read()
-
-    with open(os.path.join(KEYS_DIRECTORY, PRIVATE_KEY_FILENAME), "r") as prv_file:
-        private_key = prv_file.read()
-
+# Discover all other devices in the network
+def discovery():        
     while True:
         discovery_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         discovery_message = device_name
         for ip in range(1, len(discovery_ip)):
-            device_socket.sendto(encrypt(discovery_message, public_key), (discovery_ip[ip], discovery_port))
+            # Add our public key to the discovery message so other devices can communicate to us
+            device_socket.sendto(discovery_message+public_key, (discovery_ip[ip], discovery_port))
         try:
             # Check if port is available
             discovery_socket.bind((discovery_ip[0], discovery_port))
@@ -338,24 +334,28 @@ def discovery():
             while time.time() - connection_time < 5:
                 try:
                     data, sender_address = discovery_socket.recvfrom(1024)
-                    knownDevices[decrypt(data, private_key)] = sender_address
+                    # Extract the name of the device and its public key from discovery
+                    begin_index = data.find("-----BEGIN PUBLIC KEY-----")
+                    discovery_device_name = data[:begin_index].strip()
+                    discovery_device_public_key = data[begin_index:].strip()
+                    # Keep a dictionary of known devices from discovery
+                    knownDevices[discovery_device_name] = sender_address
+                    # Keep a dictionary of public keys for when we send messages to our known devices
+                    knownPublicKeys[str(sender_address)] = discovery_device_public_key
                 except socket.timeout:
                     print("🌋 " + device_name + ": Connected to " + str(discovery_port) + " and my known devices are " + str(knownDevices).replace("u'", "'"))
 
             # Close socket to allow other devices to connect
             discovery_socket.close()
-        except socket.error:
-            device_socket.sendto(encrypt(discovery_message, public_key), (discovery_ip[0], discovery_port))
+        except socket.error as e:
+            device_socket.sendto(discovery_message+public_key, (discovery_ip[0], discovery_port))
                 
         # Wait for 1 seconds before trying to discover more devices
         time.sleep(1)
 
 
 # Send an interest packet for a piece of data on a different device
-def send_interest_packet(data, device):
-    with open(os.path.join(KEYS_DIRECTORY, PUBLIC_KEY_FILENAME), "r") as pub_file:
-        public_key = pub_file.read()
-        
+def send_interest_packet(data, device):        
     global requestCodeNum
     global DataReceived
     requestCodeNum = requestCodeNum + 1
@@ -366,32 +366,26 @@ def send_interest_packet(data, device):
     if device == "none":
         # Check if data is in the forwarding table
         if str(device)+"/"+str(data) in forwardingTable:
-                device_socket.sendto(encrypt(packet, public_key), forwardingTable[str(device)+"/"+str(data)])
+                device_socket.sendto(encrypt(packet, knownPublicKeys[str(forwardingTable[str(device)+"/"+str(data)])]), forwardingTable[str(device)+"/"+str(data)])
         # If we have not seen this device before (from our forwarding table), perform flooding (contact all known devices)
         else:
             for devices in knownDevices:
-                device_socket.sendto(encrypt(packet, public_key), knownDevices[devices])
+                device_socket.sendto(encrypt(packet, knownPublicKeys[str(knownDevices[devices])]), knownDevices[devices])
     else:
-        device_socket.sendto(encrypt(packet, public_key), knownDevices[device])
+        device_socket.sendto(encrypt(packet, knownPublicKeys[str(knownDevices[device])]), knownDevices[device])
         time.sleep(0.1)
         # Check if the requested data has been received
-        if requestCode not in DataReceived:
+        if requestCode not in str(DataReceived) and len([key for key in forwardingTable if key.startswith(device+"/")]) > 0:
             # If not, perform flooding (contact all known devices)
             print("🌋 " + device_name + ": No response from " + device + ", performing flooding using my known devices! 🌊")
             for devices in knownDevices:
-                device_socket.sendto(encrypt(packet, public_key), knownDevices[devices])
+                device_socket.sendto(encrypt(packet, knownPublicKeys[str(knownDevices[devices])]), knownDevices[devices])
             time.sleep(0.1)
     return requestCode
 
 
 # Handle an interest request coming from another device
 def handle_interests(message, address):
-    with open(os.path.join(KEYS_DIRECTORY, PUBLIC_KEY_FILENAME), "r") as pub_file:
-        public_key = pub_file.read()
-
-    with open(os.path.join(KEYS_DIRECTORY, PRIVATE_KEY_FILENAME), "r") as prv_file:
-        private_key = prv_file.read()
-
     interest_code = decrypt(message, private_key).split('/')[1]
     requested_device = decrypt(message, private_key).split('/')[2]
     requested_data = decrypt(message, private_key).split('/')[3]
@@ -406,7 +400,7 @@ def handle_interests(message, address):
         if str(requested_device)+"/"+str(requested_data) in forwardingTable:
             print("🌋 " + device_name + ": Sending requested data from table")
             try:
-                device_socket.sendto(encrypt(message, public_key), forwardingTable[str(requested_device)+"/"+str(requested_data)])
+                device_socket.sendto(encrypt(message, knownPublicKeys[str(forwardingTable[str(requested_device)+"/"+str(requested_data)])]), forwardingTable[str(requested_device)+"/"+str(requested_data)])
             except Exception:
                 pass
         # If the requested data is not in the forwarding table, perform flooding (contact all known devices)
@@ -415,16 +409,13 @@ def handle_interests(message, address):
             for device in knownDevices:
                 if knownDevices[device] != address: # Make sure to not send the interest back to the sender
                     try:
-                        device_socket.sendto(encrypt(message, public_key), knownDevices[device])
-                    except Exception:
+                        device_socket.sendto(encrypt(decrypt(message, private_key), knownPublicKeys[str(knownDevices[device])]), knownDevices[device])
+                    except Exception as e:
                         continue
 
 
 # Handle data coming from a device
 def handle_data(message, address):
-    with open(os.path.join(KEYS_DIRECTORY, PRIVATE_KEY_FILENAME), "r") as prv_file:
-        private_key = prv_file.read()
-
     interest_code = decrypt(message, private_key).split('/')[1]
     requested_device = decrypt(message, private_key).split('/')[2]
     requested_data = decrypt(message, private_key).split('/')[3]
@@ -436,46 +427,41 @@ def handle_data(message, address):
         del interestRequests[interest_code]
     # If interest request was made by another device, forward to the correct device
     elif interest_code in interestForwards:
-        device_socket.sendto(message, interestForwards[interest_code])
+        device_socket.sendto(encrypt(decrypt(message, private_key), knownPublicKeys[str(interestForwards[interest_code])]), interestForwards[interest_code])
         del interestForwards[interest_code]
     # If the data has not been requested, perform flooding
     elif interest_code not in dataForwards:
         dataForwards[interest_code] = requested_data
         for device in knownDevices:
                 if knownDevices[device] != address: # Make sure you don't send the interest back to the sender
-                    device_socket.sendto(message, knownDevices[device])
+                    device_socket.sendto(encrypt(decrypt(message, private_key), knownPublicKeys[str(knownDevices[device])]), knownDevices[device])
+                    # device_socket.sendto(message, knownDevices[device])
 
 
 # Send requested data to an address
 def send_requested_data(message, address):
-    with open(os.path.join(KEYS_DIRECTORY, PUBLIC_KEY_FILENAME), "r") as pub_file:
-        public_key = pub_file.read()
-
-    with open(os.path.join(KEYS_DIRECTORY, PRIVATE_KEY_FILENAME), "r") as prv_file:
-        private_key = prv_file.read()
-
     interest_code = decrypt(message, private_key).split('/')[1]
     requested_device = decrypt(message, private_key).split('/')[2]
     requested_data = decrypt(message, private_key).split('/')[3]
     # Package the data into a packet
     data_response = "data"+"/"+str(interest_code)+"/"+str(requested_device)+"/"+str(getattr(earthquakeDevice, requested_data))
-    device_socket.sendto(encrypt(data_response, public_key), address)
+    device_socket.sendto(encrypt(data_response, knownPublicKeys[str(address)]), address)
 
 
 # Recieve messages from other devices
 def receive_messages():
-    with open(os.path.join(KEYS_DIRECTORY, PRIVATE_KEY_FILENAME), "r") as prv_file:
-        private_key = prv_file.read()
-
     while True:
         try:
             # Wait until we receive a message through the socket
             data, sender_address = device_socket.recvfrom(1024)
-            # Check if the message is an interest request or data
-            if decrypt(data, private_key).split('/')[0] == "interest":
-                handle_interests(data, sender_address)
-            elif decrypt(data, private_key).split('/')[0] == "data":
-                handle_data(data, sender_address)
+            if str(sender_address) in knownPublicKeys:
+                # Check if the message is an interest request or data
+                if decrypt(data, private_key).split('/')[0] == "interest":
+                    handle_interests(data, sender_address)
+                elif decrypt(data, private_key).split('/')[0] == "data":
+                    handle_data(data, sender_address)
+            else:
+                print("🌋 " + device_name + ": Waiting to discover device before responding back (public key needed)")
         except socket.error: 
             continue
 
@@ -527,12 +513,15 @@ def main():
     global discovery_ip
     global discovery_port
     global knownDevices
+    global knownPublicKeys
     global forwardingTable
     global interestForwards
     global interestRequests
     global dataForwards
     global DataReceived
     global requestCodeNum
+    global public_key
+    global private_key
     global device_socket
 
     # Initialise global variables
@@ -551,12 +540,14 @@ def main():
     discovery_ip = arguments.discovery_ip
     discovery_port = arguments.discovery_port[0]
     knownDevices = {} # Known devices are stored as device: (ip, port)
+    knownPublicKeys = {} # Known public keys are stored and differentiated with the (ip, port) where they come from
     forwardingTable = {} # In the format of address: device + "/" + data
     interestForwards = {} # In the format of interest code: address
     interestRequests = {} # Rrepresents the interest codes generated by this device
     dataForwards = {} # In the format of interest code: address
     DataReceived = {} # In the format of interest code: data
     requestCodeNum = 0 # Request codes are for packets when sending messages and having a unique ID for each
+    public_key, private_key = generate_keys() # Generate a pair of public and private keys specific for this earthquake device
     device_socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # Socket for drone to communicate via UDP
     device_socket.bind((device_ip, device_port)) # Bind drone to specified unique port
     print("🌋 " + device_name + ": socket connected via UDP.")
