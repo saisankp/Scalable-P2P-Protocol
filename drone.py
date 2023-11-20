@@ -37,7 +37,7 @@ class Drone:
             self.update_gps()
             print("🛸 " + device_name + ": Current location is " + str(self.gps))
             if not self.charging:
-                self.battery_level -= 0.5 # Battery level goes down over time
+                self.battery_level -= 5 # Battery level goes down over time
                 print("🛸 " + device_name + ": Current battery percentage is " + str(self.battery_level) + "%")
             else: 
                 self.battery_level += min(10, 100-self.battery_level) # If charging, the battery goes up
@@ -80,7 +80,7 @@ class Drone:
                 print("🛸 " + device_name + ": Currently charging with a battery percentage of " + str(self.battery_level) + "% 🔋")
                 time.sleep(1)
             # Check if the battery is low
-            if(self.battery_level <= 35):
+            if(self.battery_level <= 50):
                 # The battery is low so the drone cannot be used for tasks
                 self.busy = True
                 self.earthquake = False
@@ -101,7 +101,6 @@ class Drone:
                             usage_voltage_code = send_interest_packet("voltage", device)
                             temperature_code = send_interest_packet("temperature", device)
                             locking_actuator_code = send_interest_packet("locking_actuator_status", device)
-
                             # If the charger is available, get the GPS of the charger so the drone can go towards it.
                             if usage_status_code in DataReceived and usage_voltage_code in DataReceived and temperature_code in DataReceived and locking_actuator_code in DataReceived:
                                 if DataReceived[usage_status_code] == "False" and DataReceived[usage_voltage_code] == "17" and int(DataReceived[temperature_code]) < 40 and DataReceived[locking_actuator_code] == "False":
@@ -331,6 +330,7 @@ def send_interest_packet(data, device):
             for devices in knownDevices:
                 device_socket.sendto(encrypt(packet, knownPublicKeys[str(knownDevices[devices])]), knownDevices[devices])
             time.sleep(0.1)
+    time.sleep(0.2)
     return requestCode
 
 
@@ -348,17 +348,18 @@ def handle_interests(message, address):
         interestForwards[interest_code] = address # add to list of unresolved interests
         # Check if requested data is in forwarding table
         if str(requested_device)+"/"+str(requested_data) in forwardingTable:
-            print("🛸 " + device_name + ": Sending requested data from table")
+            print("🔥 " + device_name + ": Sending requested data from table")
             try:
                 device_socket.sendto(encrypt(message, knownPublicKeys[str(forwardingTable[str(requested_device)+"/"+str(requested_data)])]), forwardingTable[str(requested_device)+"/"+str(requested_data)])
             except Exception:
                 pass
         # If the requested data is not in the forwarding table, perform flooding (contact all known devices)
         else:
-            print("🛸 " + device_name + ": Forwarding packet")
+            print("🔥 " + device_name + ": Forwarding packet")
             for device in knownDevices:
                 if knownDevices[device] != address: # Make sure to not send the interest back to the sender
                     try:
+                        print("forwarding to", device, knownDevices[device])
                         device_socket.sendto(encrypt(decrypt(message, private_key), knownPublicKeys[str(knownDevices[device])]), knownDevices[device])
                     except Exception as e:
                         continue
@@ -406,10 +407,13 @@ def receive_messages():
             data, sender_address = device_socket.recvfrom(1024)
             if str(sender_address) in knownPublicKeys:
                 # Check if the message is an interest request or data
-                if decrypt(data, private_key).split('/')[0] == "interest":
-                    handle_interests(data, sender_address)
-                elif decrypt(data, private_key).split('/')[0] == "data":
-                    handle_data(data, sender_address)
+                try:
+                    decrypted_data = decrypt(data, private_key)
+                    if decrypted_data.split('/')[0] == "interest":
+                        handle_interests(data, sender_address)
+                    elif decrypted_data.split('/')[0] == "data":
+                        handle_data(data, sender_address)
+                except AttributeError as e: continue
             else:
                 print("🛸 " + device_name + ": Waiting to discover device before responding back (public key needed)")
         except socket.error: 

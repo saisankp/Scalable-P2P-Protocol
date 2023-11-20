@@ -149,26 +149,23 @@ def send_interest_packet(data, device):
         # Check if the requested data has been received
         if requestCode not in str(DataReceived) and len([key for key in forwardingTable if key.startswith(device+"/")]) > 0:
             # If not, perform flooding (contact all known devices)
-            print("🔌 " + device_name + ": No response from " + device + ", performing flooding using my known devices! 🌊")
+            print("🛸 " + device_name + ": No response from " + device + ", performing flooding using my known devices! 🌊")
             for devices in knownDevices:
                 device_socket.sendto(encrypt(packet, knownPublicKeys[str(knownDevices[devices])]), knownDevices[devices])
             time.sleep(0.1)
+    time.sleep(0.2)
     return requestCode
 
 
 # Handle an interest request coming from another device
 def handle_interests(message, address):
     global responding
-    print(address)
-    print(knownDevices["Drone-1"])
     if responding or address != knownDevices["Drone-1"]:
-        print("got message from " + str(address))
         interest_code = decrypt(message, private_key).split('/')[1]
         requested_device = decrypt(message, private_key).split('/')[2]
         requested_data = decrypt(message, private_key).split('/')[3]
         # If this is the requested device, send the info
         if requested_device == device_name:
-            print("this is the device")
             send_requested_data(message, address)
 
         # Otherwise, forward the packet if it hasnt been already
@@ -226,8 +223,9 @@ def send_requested_data(message, address):
     requested_device = decrypt(message, private_key).split('/')[2]
     requested_data = decrypt(message, private_key).split('/')[3]
     # Package the data into a packet
+    print(requested_data)
     data_response = "data"+"/"+str(interest_code)+"/"+str(requested_device)+"/"+str(getattr(drone_charger, requested_data))
-    print("sent to" + str(address))
+    print("sent to" + str(address), str(getattr(drone_charger, requested_data)))
     device_socket.sendto(encrypt(data_response, knownPublicKeys[str(address)]), address)
 
 
@@ -239,12 +237,15 @@ def receive_messages():
             data, sender_address = device_socket.recvfrom(1024)
             if str(sender_address) in knownPublicKeys:
                 # Check if the message is an interest request or data
-                if decrypt(data, private_key).split('/')[0] == "interest":
-                    handle_interests(data, sender_address)
-                elif decrypt(data, private_key).split('/')[0] == "data":
-                    handle_data(data, sender_address)
+                try:
+                    decrypted_data = decrypt(data, private_key)
+                    if decrypted_data.split('/')[0] == "interest":
+                        handle_interests(data, sender_address)
+                    elif decrypted_data.split('/')[0] == "data":
+                        handle_data(data, sender_address)
+                except AttributeError as e: continue
             else:
-                print("🔌 " + device_name + ": : Waiting to discover device before responding back (public key needed)")
+                print("🛸 " + device_name + ": Waiting to discover device before responding back (public key needed)")
         except socket.error: 
             continue
 
