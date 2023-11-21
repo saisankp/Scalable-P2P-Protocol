@@ -6,10 +6,10 @@ This project simulates a disaster management system using a scalable information
 Everything should already be setup with the use of the virtual environment `env`, so you only need to activate this virtual environment. If anything goes wrong, choose commands from `setup.sh` to fix any issues.
 
 # Execution
-There are multiple ways of running the code to see the value it brings.
+There are multiple ways of running the code to see the value it brings. The Raspberry Pi's we used are provided to us by SCSS (School of Computer Science and Statistics) at Trinity College Dublin through a ssh connection with macneill.
 
 ## 1. Regular execution across various Raspberry Pi's
-Here is a scenario that utilises all 5 devices our system uses (which have 8 sensors/actuators each) and shows how each device communicates with each other across multiple Raspberry Pi's
+Here is a scenario that utilises all 5 devices our system uses (which have 8 sensors/actuators each) and shows how each device communicates with each other across multiple Raspberry Pi's.
 
 ![Regular execution](assets/img/regular-execution.png)
 
@@ -102,6 +102,9 @@ Terminal 4: `demonstration/demo-3/pi-27/terminal-5.sh`
 
 # Demo
 A few basic/interesting scenarios are recorded and in the `/assets/demo` folder. Feel free to check them out if you don't want to run everything but just want a quick overview.
+
+![Interaction](assets/demo/drone-interacting-with-devices.mov)
+
 
 ## Group Members
 
