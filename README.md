@@ -1,6 +1,6 @@
 # Scalable ICN for Disaster-Management using Peer-to-Peer Communication
 
-This project simulates a disaster management system using a scalable information centric network (ICN). Devices have 8 sensors/actuators that monitor readings for earthquakes, wildfires, and hurricanes. If these go over a threshold, they contact drones who assist the situation. Drones have a water payload, a general payload for first aid kits etc, speakers for pre-set information for the general public, and flashlights for visibilty. Drones decrease their battery over time, so they communicate with drone chargers to charge while carrying out tasks for devices monitoring the environment.
+This project simulates a disaster management system using a scalable information centric network (ICN). Devices have 8 sensors/actuators that monitor readings for earthquakes, wildfires, and hurricanes. If these go over a threshold, they contact drones who assist the situation. Drones have a water payload, a general payload for first aid kits etc, speakers for preset information for the general public, and flashlights for visibilty. Drones decrease their battery over time, so they communicate with drone chargers to charge while carrying out tasks for devices monitoring the environment.
 
 ## Members of Group 2
 
