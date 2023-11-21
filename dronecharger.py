@@ -149,7 +149,7 @@ def send_interest_packet(data, device):
         # Check if the requested data has been received
         if requestCode not in str(DataReceived) and len([key for key in forwardingTable if key.startswith(device+"/")]) > 0:
             # If not, perform flooding (contact all known devices)
-            print("🛸 " + device_name + ": No response from " + device + ", performing flooding using my known devices! 🌊")
+            print("🔌 " + device_name + ": No response from " + device + ", performing flooding using my known devices! 🌊")
             for devices in knownDevices:
                 device_socket.sendto(encrypt(packet, knownPublicKeys[str(knownDevices[devices])]), knownDevices[devices])
             time.sleep(0.1)
@@ -178,10 +178,10 @@ def handle_interests(message, address):
                 pass
         # If the requested data is not in the forwarding table, perform flooding (contact all known devices)
         else:
-            print("🔌 " + device_name + ": Forwarding packet")
             for device in knownDevices:
                 if knownDevices[device] != address: # Make sure to not send the interest back to the sender
                     try:
+                        print("🔌 " + device_name + ": Forwarding packet to " + device)
                         device_socket.sendto(encrypt(decrypt(message, private_key), knownPublicKeys[str(knownDevices[device])]), knownDevices[device])
                     except Exception as e:
                         continue
@@ -235,9 +235,9 @@ def receive_messages():
                         handle_interests(data, sender_address)
                     elif decrypted_data.split('/')[0] == "data":
                         handle_data(data, sender_address)
-                except AttributeError as e: continue
+                except Exception as e: continue
             else:
-                print("🛸 " + device_name + ": Waiting to discover device before responding back (public key needed)")
+                print("🔌 " + device_name + ": Waiting to discover device before responding back (public key needed)")
         except socket.error: 
             continue
 

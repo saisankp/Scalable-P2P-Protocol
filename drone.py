@@ -31,13 +31,14 @@ class Drone:
         self.speaker_status = False # Status of speaker on drone
         self.flashlight_status = False # Status of flashlight load on drone
 
+
     def simulate_sensor_data(self):
         while True:
             # Move the drone towards the destination
             self.update_gps()
             print("🛸 " + device_name + ": Current location is " + str(self.gps))
             if not self.charging:
-                self.battery_level -= .5 # Battery level goes down over time
+                self.battery_level -= 5 # Battery level goes down over time
                 print("🛸 " + device_name + ": Current battery percentage is " + str(self.battery_level) + "%")
             else: 
                 self.battery_level += min(10, 100-self.battery_level) # If charging, the battery goes up
@@ -135,7 +136,6 @@ class Drone:
                             temperature_probe_code = send_interest_packet("temperature_probe_active", device)
                             fire_radiometer_code = send_interest_packet("fire_radiometer_active", device)
                             sensor_codes = [smoke_particle_sensor_code,infrared_sensor_code,gas_sensor_code,wind_sensor_code,humidity_sensor_code,temperature_probe_code,fire_radiometer_code]
-                            
                             # Check if at least half of the sensors are sensors are detecting a fire
                             if all(key in DataReceived for key in sensor_codes):
                                 if [(DataReceived[smoke_particle_sensor_code]),(DataReceived[infrared_sensor_code]),(DataReceived[gas_sensor_code]),(DataReceived[wind_sensor_code]),(DataReceived[humidity_sensor_code]),(DataReceived[temperature_probe_code]),(DataReceived[fire_radiometer_code])].count("True") >= 6:
@@ -163,6 +163,7 @@ class Drone:
                             
                             # Check if at least half of the sensors are detecting an hurricane
                             if all(key in DataReceived for key in sensor_codes):
+                                print([(DataReceived[anemometer_code]),(DataReceived[barometer_code]),(DataReceived[hygrometer_code]),(DataReceived[thermometer_code]),(DataReceived[rain_gauge_code]),(DataReceived[lightning_detector_code]),(DataReceived[doppler_radar_code]), (DataReceived[storm_surge_sensor_code])].count("True"))
                                 if [(DataReceived[anemometer_code]),(DataReceived[barometer_code]),(DataReceived[hygrometer_code]),(DataReceived[thermometer_code]),(DataReceived[rain_gauge_code]),(DataReceived[lightning_detector_code]),(DataReceived[doppler_radar_code]), (DataReceived[storm_surge_sensor_code])].count("True") >= 4:
                                     gps_code = send_interest_packet("gps", device)
                                     self.busy = True # mark drone as busy
@@ -184,7 +185,6 @@ class Drone:
                             pwavesensor_code = send_interest_packet("pwavesensor_active", device)
                             swavesensor_code = send_interest_packet("swavesensor_active", device)
                             sensor_codes = [seismometer_code,accelerometer_code,inclinometer_code,acounsticsensor_code,straingauge_code,pwavesensor_code,swavesensor_code]
-
                             # Check if at least half of the sensors are detecting an earthquake (to stop false positive reactions)
                             if all(key in DataReceived for key in sensor_codes):
                                 if [(DataReceived[seismometer_code]),(DataReceived[accelerometer_code]),(DataReceived[inclinometer_code]),(DataReceived[acounsticsensor_code]),(DataReceived[straingauge_code]),(DataReceived[pwavesensor_code]),(DataReceived[swavesensor_code])].count("True") >= 1:
@@ -200,7 +200,6 @@ class Drone:
                                         self.earthquake = True
                                     else:
                                         print("🛸 " + device_name + ": GPS of earthquake device could not be found")
-
                 except RuntimeError as e: continue
 
             # Check if drone has completed current task, send it back to base which is (0,0)
@@ -254,7 +253,7 @@ class Drone:
                     print("🛸 " + device_name + ": My job is done. I'm going back to base 🏠")
 
             # Wait 1 second before trying to cater for a disaster again
-            time.sleep(1)
+            # time.sleep(0.5)
 
 
 # Use pythagorean theorem to find the minimum distance to a location (whether it is a drone charger, earthquake device etc)
@@ -300,7 +299,7 @@ def discovery():
             device_socket.sendto(discovery_message+public_key, (discovery_ip[0], discovery_port))
                 
         # Wait for 1 seconds before trying to discover more devices
-        time.sleep(1)
+        time.sleep(2)
 
 
 # Send an interest packet for a piece of data on a different device
@@ -348,18 +347,17 @@ def handle_interests(message, address):
         interestForwards[interest_code] = address # add to list of unresolved interests
         # Check if requested data is in forwarding table
         if str(requested_device)+"/"+str(requested_data) in forwardingTable:
-            print("🔥 " + device_name + ": Sending requested data from table")
+            print("🛸 " + device_name + ": Sending requested data from table")
             try:
                 device_socket.sendto(encrypt(message, knownPublicKeys[str(forwardingTable[str(requested_device)+"/"+str(requested_data)])]), forwardingTable[str(requested_device)+"/"+str(requested_data)])
             except Exception:
                 pass
         # If the requested data is not in the forwarding table, perform flooding (contact all known devices)
         else:
-            print("🔥 " + device_name + ": Forwarding packet")
             for device in knownDevices:
                 if knownDevices[device] != address: # Make sure to not send the interest back to the sender
                     try:
-                        print("forwarding to", device, knownDevices[device])
+                        print("🛸 " + device_name + ": Forwarding packet to " + device)
                         device_socket.sendto(encrypt(decrypt(message, private_key), knownPublicKeys[str(knownDevices[device])]), knownDevices[device])
                     except Exception as e:
                         continue
@@ -413,7 +411,7 @@ def receive_messages():
                         handle_interests(data, sender_address)
                     elif decrypted_data.split('/')[0] == "data":
                         handle_data(data, sender_address)
-                except AttributeError as e: continue
+                except Exception as e: continue
             else:
                 print("🛸 " + device_name + ": Waiting to discover device before responding back (public key needed)")
         except socket.error: 

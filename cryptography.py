@@ -3,6 +3,7 @@ from Crypto.Cipher import PKCS1_OAEP
 import binascii
 import zlib
 
+
 def generate_keys():
     # Generate a new RSA key pair
     key = RSA.generate(1024, e=65537)
@@ -15,26 +16,21 @@ def generate_keys():
 
 
 def encrypt(message, public_key_bytes):
-    try:
     # Load the public key from the transmitted bytes
-        public_key = RSA.importKey(public_key_bytes)
-        # Encrypt the message
-        cipher = PKCS1_OAEP.new(public_key)
-        ciphertext = cipher.encrypt(zlib.compress(message))
-        # Return as bytes
-        return binascii.hexlify(ciphertext)
-    except Exception:
-        pass
+    public_key = RSA.importKey(public_key_bytes)
+    # Encrypt the message
+    cipher = PKCS1_OAEP.new(public_key)
+    ciphertext = cipher.encrypt(zlib.compress(message))
+    # Return as bytes
+    return binascii.hexlify(ciphertext)
+
 
 def decrypt(encrypted_message, private_key_bytes):
-    try:
-        # Load the private key from the transmitted bytes
-        private_key = RSA.importKey(private_key_bytes)
-        # Decompress the encrypted message
-        compressed_ciphertext = binascii.unhexlify(encrypted_message)
-        # Decrypt the message
-        cipher = PKCS1_OAEP.new(private_key)
-        plaintext = cipher.decrypt(compressed_ciphertext)
-        return zlib.decompress(str(plaintext))
-    except Exception:
-        pass
+    # Load the private key from the transmitted bytes
+    private_key = RSA.importKey(private_key_bytes)
+    # Decompress the encrypted message
+    compressed_ciphertext = binascii.unhexlify(encrypted_message)
+    # Decrypt the message
+    cipher = PKCS1_OAEP.new(private_key)
+    plaintext = cipher.decrypt(compressed_ciphertext)
+    return zlib.decompress(str(plaintext))
