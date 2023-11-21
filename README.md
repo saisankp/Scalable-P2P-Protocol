@@ -113,7 +113,10 @@ Terminal 4: `demonstration/demo-3/pi-27/terminal-5.sh`
 
 # Demo
 A few basic/interesting scenarios are recorded and in the `/assets/demo` folder. Feel free to check them out if you don't want to run everything but just want a quick overview.
-## Drone interacting with devices
+## Drone interacting with charger (when a drone has less than 35% battery)
+https://github.com/saisankp/Scalable-P2P-Protocol/assets/34750736/220b6b16-af9b-46e0-b235-1e38b5e7a5e5
+
+## Drone interacting with devices (when devices detect a disaster and contact drones)
 https://github.com/saisankp/Scalable-P2P-Protocol/assets/34750736/d9a5484b-aa8f-4213-a552-4fcfc9c67384
 
 ## Proof of robustness of our system (with flooding)
