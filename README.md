@@ -106,7 +106,7 @@ chmod +x demonstration/demo-2/pi-27/terminal-2.sh
 ./demonstration/demo-2/pi-27/terminal-2.sh
 ```
 
-Make sure you run these scripts on their appropriate Raspberry Pi's. Using a different machine will cause issues, since we initialise the IP the device is running on initially in the commands.
+Make sure you run these scripts on their appropriate Raspberry Pi's. Using a different machine will cause issues since the commands used are catered to each Raspberry Pi.
 
 ## 3. Run all 5 devices per Raspberry Pi (OPTIONAL)
 This is only optional if you are curious and want to experience some mayhem. It is hard to track everything going on, since there would be 5 devices x 3 Raspberry Pi's = 15 devices running in total. However, if you are curious you can run it to see how the system handles it.
@@ -115,31 +115,31 @@ You need 5 terminals open per Raspberry Pi.
 
 #### On Raspberry Pi #2 (Drone, Drone Charger, Earthquake Device, Hurricane Device, Wildfire Device):
 
-Terminal 1: 
+Terminal 1 (Drone): 
 ```
 chmod +x demonstration/demo-3/pi-2/terminal-1.sh
 ./demonstration/demo-3/pi-2/terminal-1.sh
 ```
 
-Terminal 2: 
+Terminal 2 (Drone Charger): 
 ```
 chmod +x demonstration/demo-3/pi-2/terminal-2.sh
 ./demonstration/demo-3/pi-2/terminal-2.sh
 ```
 
-Terminal 3: 
+Terminal 3 (Earthquake Device): 
 ```
 chmod +x demonstration/demo-3/pi-2/terminal-3.sh
 ./demonstration/demo-3/pi-2/terminal-3.sh
 ```
 
-Terminal 4: 
+Terminal 4 (Hurricane Device): 
 ```
 chmod demonstration/demo-3/pi-2/terminal-4.sh
 ./demonstration/demo-3/pi-2/terminal-4.sh
 ```
 
-Terminal 5: 
+Terminal 5 (Wildfire Device): 
 ```
 chmod +x demonstration/demo-3/pi-2/terminal-5.sh
 ./demonstration/demo-3/pi-2/terminal-5.sh
@@ -147,31 +147,31 @@ chmod +x demonstration/demo-3/pi-2/terminal-5.sh
 
 #### On Raspberry Pi #25 (Drone, Drone Charger, Earthquake Device, Hurricane Device, Wildfire Device):
 
-Terminal 1: 
+Terminal 1 (Drone): 
 ```
 chmod +x demonstration/demo-3/pi-25/terminal-1.sh
 ./demonstration/demo-3/pi-25/terminal-1.sh
 ```
 
-Terminal 2: 
+Terminal 2 (Drone Charger): 
 ```
 chmod +x demonstration/demo-3/pi-25/terminal-2.sh
 ./demonstration/demo-3/pi-25/terminal-2.sh
 ```
 
-Terminal 3: 
+Terminal 3 (Earthquake Device): 
 ```
 chmod +x demonstration/demo-3/pi-25/terminal-3.sh
 ./demonstration/demo-3/pi-25/terminal-3.sh
 ```
 
-Terminal 4: 
+Terminal 4 (Hurricane Device): 
 ```
 chmod +x demonstration/demo-3/pi-25/terminal-4.sh
 ./demonstration/demo-3/pi-25/terminal-4.sh
 ```
 
-Terminal 5: 
+Terminal 5 (Wildfire Device): 
 ```
 chmod +x demonstration/demo-3/pi-25/terminal-5.sh
 ./demonstration/demo-3/pi-25/terminal-5.sh
@@ -179,36 +179,35 @@ chmod +x demonstration/demo-3/pi-25/terminal-5.sh
 
 #### On Raspberry Pi #27 (Drone, Drone Charger, Earthquake Device, Hurricane Device, Wildfire Device):
 
-Terminal 1: 
+Terminal 1 (Drone): 
 ```
 chmod +x demonstration/demo-3/pi-27/terminal-1.sh
 ./demonstration/demo-3/pi-27/terminal-1.sh
 ```
 
-Terminal 2: 
+Terminal 2 (Drone Charger): 
 ```
 chmod +x demonstration/demo-3/pi-27/terminal-2.sh
 ./demonstration/demo-3/pi-27/terminal-2.sh
 ```
 
-Terminal 3: 
+Terminal 3 (Earthquake Device): 
 ```
 chmod +x demonstration/demo-3/pi-27/terminal-3.sh
 ./demonstration/demo-3/pi-27/terminal-3.sh
 ```
 
-Terminal 4: 
+Terminal 4 (Hurricane Device): 
 ```
 chmod +x demonstration/demo-3/pi-27/terminal-4.sh
 ./demonstration/demo-3/pi-27/terminal-4.sh
 ```
 
-Terminal 5: 
+Terminal 5 (Wildfire Device): 
 ```
 chmod +x demonstration/demo-3/pi-27/terminal-5.sh
 ./demonstration/demo-3/pi-27/terminal-5.sh
 ```
-
 
 # Demo
 A few basic/interesting scenarios are recorded in the `/assets/demo` folder. Feel free to check them out below if you don't want to run everything but just want a quick overview of our project.
