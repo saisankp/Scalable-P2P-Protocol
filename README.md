@@ -15,6 +15,9 @@ Code contributions by each member are noted in comments above each function.
 
 # Setup
 Everything should already be setup with the use of the virtual environment `env`, so you only need to activate this virtual environment. If anything goes wrong, choose commands from `setup.sh` to fix any issues.
+```
+source env/bin/activate
+```
 
 # Execution
 There are multiple ways of running the code to see the value it brings. The Raspberry Pi's we used are provided to us by SCSS (School of Computer Science and Statistics) at Trinity College Dublin through a ssh connection with macneill.
