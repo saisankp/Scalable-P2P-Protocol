@@ -162,7 +162,7 @@ class FireRadiometer:
         return random.uniform(0, 100)
     
 
-# Function below by Sean Dowling
+# Function below by Sean Downling (initial discovery networking + getting known devices) and Prathamesh Sai (getting public keys + discovering devices on various Raspberry Pi's and not only ours)
 # Discover all other devices in the network
 def discovery():        
     while True:
@@ -197,7 +197,7 @@ def discovery():
         except socket.error as e:
             device_socket.sendto(discovery_message+public_key, (discovery_ip[0], discovery_port))
                 
-        # Wait for 1 seconds before trying to discover more devices
+        # Wait for 2 seconds before trying to discover more devices
         time.sleep(2)
 
 
