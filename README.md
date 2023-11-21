@@ -2,6 +2,17 @@
 
 This project simulates a disaster management system using a scalable information centric network (ICN). Devices have 8 sensors/actuators that monitor readings for earthquakes, wildfires, and hurricanes. If these go over a threshold, they contact drones who assist the situation. Drones have a water payload, a general payload for first aid kits etc, speakers for pre-set information for the general public, and flashlights for visibilty. Drones decrease their battery over time, so they communicate with drone chargers to charge while carrying out tasks for devices monitoring the environment.
 
+## Members of Group 2
+
+|    Student Name    | Student ID |                Course                |      GitHub Username       |
+|:------------------:|:----------:|:------------------------------------:|:--------------------------:|
+|   Prathamesh Sai   |  19314123  | Integrated Computer Science (M.C.S.) |    [saisankp][saisankp]    |
+|     Sean Dowling   |  to fill in  | Integrated Computer Engineering (M.A.I)      |    [seandownling123][seandownling123]      |
+|     Hamzah Khan    |  23335427  | Computer Science - Data Science      |    [hamzah7k][hakhan]      |
+|     Benika Yadav    |  to fill in  | Computer Science - Data Science      |    [beni444][beni444]      |
+
+Code contributions by each member are noted in comments above each function.
+
 # Setup
 Everything should already be setup with the use of the virtual environment `env`, so you only need to activate this virtual environment. If anything goes wrong, choose commands from `setup.sh` to fix any issues.
 
@@ -102,20 +113,11 @@ Terminal 4: `demonstration/demo-3/pi-27/terminal-5.sh`
 
 # Demo
 A few basic/interesting scenarios are recorded and in the `/assets/demo` folder. Feel free to check them out if you don't want to run everything but just want a quick overview.
+## Drone interacting with devices
+https://github.com/saisankp/Scalable-P2P-Protocol/assets/34750736/d9a5484b-aa8f-4213-a552-4fcfc9c67384
 
-![Interaction](assets/demo/drone-interacting-with-devices.mov)
-
-
-## Group Members
-
-|    Student Name    | Student ID |                Course                |      GitHub Username       |
-|:------------------:|:----------:|:------------------------------------:|:--------------------------:|
-|   Prathamesh Sai   |  19314123  | Integrated Computer Science (M.C.S.) |    [saisankp][saisankp]    |
-|     Sean Dowling   |  to fill in  | Integrated Computer Engineering (M.A.I)      |    [seandownling123][seandownling123]      |
-|     Hamzah Khan    |  23335427  | Computer Science - Data Science      |    [hamzah7k][hakhan]      |
-|     Benika Yadav    |  to fill in  | Computer Science - Data Science      |    [beni444][beni444]      |
-
-Code contributions by each member is noted in comments above each function.
+## Proof of robustness of our system (with flooding)
+https://github.com/saisankp/Scalable-P2P-Protocol/assets/34750736/7a8d11bd-56cf-4849-907b-a400a776106e
 
 [saisankp]: https://github.com/saisankp
 [seandownling123]: https://github.com/Seandowling123
