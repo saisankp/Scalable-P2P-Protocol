@@ -13,6 +13,7 @@ from cryptography import generate_keys, encrypt, decrypt
 
 
 class HurricaneDevice:
+    # Function below by Benika Yadav
     def __init__(self):
         # Sensor data and thresholds
         self.anemometer_data = 0
@@ -42,6 +43,7 @@ class HurricaneDevice:
         self.storm_surge_sensor_active = 0
 
 
+    # Function below by Prathamesh Sai
     def generate_sensor_data(self):
         while True:
             time.sleep(2)
@@ -82,6 +84,7 @@ class HurricaneDevice:
                     print("🌀 " + device_name + ": The sensors indicate a hurricane is NOT happening ❌")
 
 
+# Function below by Sean Dowling
 # Discover all other devices in the network
 def discovery():        
     while True:
@@ -120,6 +123,7 @@ def discovery():
         time.sleep(2)
 
 
+# Function below by Sean Dowling
 # Send an interest packet for a piece of data on a different device
 def send_interest_packet(data, device):        
     global requestCodeNum
@@ -151,6 +155,7 @@ def send_interest_packet(data, device):
     return requestCode
 
 
+# Function below by Sean Dowling
 # Handle an interest request coming from another device
 def handle_interests(message, address):
     interest_code = decrypt(message, private_key).split('/')[1]
@@ -182,6 +187,7 @@ def handle_interests(message, address):
                         continue
 
 
+# Function below by Sean Dowling
 # Handle data coming from a device
 def handle_data(message, address):
     interest_code = decrypt(message, private_key).split('/')[1]
@@ -203,9 +209,9 @@ def handle_data(message, address):
         for device in knownDevices:
                 if knownDevices[device] != address: # Make sure you don't send the interest back to the sender
                     device_socket.sendto(encrypt(decrypt(message, private_key), knownPublicKeys[str(knownDevices[device])]), knownDevices[device])
-                    # device_socket.sendto(message, knownDevices[device])
 
 
+# Function below by Sean Dowling
 # Send requested data to an address
 def send_requested_data(message, address):
     interest_code = decrypt(message, private_key).split('/')[1]
@@ -216,6 +222,7 @@ def send_requested_data(message, address):
     device_socket.sendto(encrypt(data_response, knownPublicKeys[str(address)]), address)
 
 
+# Function below by Prathamesh Sai
 # Recieve messages from other devices
 def receive_messages():
     while True:
@@ -237,6 +244,7 @@ def receive_messages():
             continue
 
 
+# Function below by Prathamesh Sai
 def parseArguments(parser):
     parser = argparse.ArgumentParser()
     argumentsAndDescriptions = {
@@ -260,10 +268,12 @@ def parseArguments(parser):
     return arguments
 
 
+# Function below by Prathamesh Sai
 def signal_handler(sig, frame):
     subprocess.check_output(['kill', '-9', str(os.getpid())])
 
 
+# Function below by Prathamesh Sai
 def main():
     arguments = parseArguments(argparse.ArgumentParser())
     # Set the signal handler for Ctrl+C

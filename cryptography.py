@@ -3,7 +3,7 @@ from Crypto.Cipher import PKCS1_OAEP
 import binascii
 import zlib
 
-
+# Function below by Prathamesh Sai
 def generate_keys():
     # Generate a new RSA key pair
     key = RSA.generate(1024, e=65537)
@@ -15,6 +15,7 @@ def generate_keys():
     return public_key_in_bytes, private_key_in_bytes
 
 
+# Function below by Prathamesh Sai
 def encrypt(message, public_key_bytes):
     # Load the public key from the transmitted bytes
     public_key = RSA.importKey(public_key_bytes)
@@ -25,6 +26,7 @@ def encrypt(message, public_key_bytes):
     return binascii.hexlify(ciphertext)
 
 
+# Function below by Prathamesh Sai
 def decrypt(encrypted_message, private_key_bytes):
     # Load the private key from the transmitted bytes
     private_key = RSA.importKey(private_key_bytes)

@@ -16,12 +16,14 @@ from cryptography import generate_keys, encrypt, decrypt
 
 
 class Earthquake:
+    # Function below by Sean Dowling
     def __init__(self):
         self.active = 0
         self.start = 0
         self.history = []
 
 
+    # Function below by Sean Dowling
     def trigger_earthquake(self):
         i = 0
         while True:
@@ -39,6 +41,7 @@ class Earthquake:
 
 
 class Seismometer:
+    # Function below by Sean Dowling
     def __init__(self):
         self.output = 0
         self.history = []
@@ -46,7 +49,7 @@ class Seismometer:
         self.threshold = .1
         self.activated = 0
 
-
+    # Function below by Sean Dowling
     def generate_data(self):        
         high = 1
         low = .05
@@ -72,6 +75,7 @@ class Seismometer:
 
 
 class Accelerometer:
+    # Function below by Sean Dowling
     def __init__(self):
         self.output = 0
         self.history = []
@@ -80,6 +84,7 @@ class Accelerometer:
         self.activated = 0
 
 
+    # Function below by Sean Dowling
     def generate_data(self):
         while True:
             if (not earthquake.active): # random noise if there is no earthquake
@@ -111,6 +116,7 @@ class Accelerometer:
 
 
 class Inclinometer:
+    # Function below by Sean Dowling
     def __init__(self):
         self.output = 0
         self.history = []
@@ -119,6 +125,7 @@ class Inclinometer:
         self.activated = 0
 
 
+    # Function below by Sean Dowling
     def generate_data(self):
         while True:
             if (not earthquake.active): # random noise if there is no earthquake
@@ -145,6 +152,7 @@ class Inclinometer:
 
 
 class StrainGauge:
+    # Function below by Sean Dowling
     def __init__(self):
         self.output = 0
         self.history = []
@@ -153,6 +161,7 @@ class StrainGauge:
         self.activated = 0
 
 
+    # Function below by Sean Dowling
     def generate_data(self):
         high = .1
         amplitude = 0
@@ -180,6 +189,7 @@ class StrainGauge:
 
 
 class AcousticSensor:
+    # Function below by Sean Dowling
     def __init__(self):
         self.output = 0
         self.history = []
@@ -187,7 +197,7 @@ class AcousticSensor:
         self.threshold = .5
         self.activated = 0
 
-
+    # Function below by Sean Dowling
     def generate_data(self):
         while True:
             if (not earthquake.active): # random noise if there is no earthquake
@@ -213,6 +223,7 @@ class AcousticSensor:
 
 
 class PwaveSensor:
+    # Function below by Sean Dowling
     def __init__(self):
         self.output = 0
         self.history = []
@@ -221,6 +232,7 @@ class PwaveSensor:
         self.activated = 0
 
 
+    # Function below by Sean Dowling
     def generate_data(self):        
         high = .5
         low = .05
@@ -246,6 +258,7 @@ class PwaveSensor:
 
 
 class SwaveSensor:
+    # Function below by Sean Dowling
     def __init__(self):
         self.output = 0
         self.history = []
@@ -254,6 +267,7 @@ class SwaveSensor:
         self.activated = 0
 
 
+    # Function below by Sean Dowling
     def generate_data(self):        
         high = 1
         low = .1
@@ -277,8 +291,10 @@ class SwaveSensor:
             self.activated = abs(self.output) >= self.threshold
             time.sleep(1)
             
+
 # Checks if sensors are detecting an earthquake
 class EarthquakeDevice:
+    # Function below by Sean Dowling
     def __init__(self):
         self.history = []
         self.seismometer_active = 0
@@ -291,6 +307,7 @@ class EarthquakeDevice:
         self.gps = (50,50)
 
 
+    # Function below by Prathamesh Sai
     def monitor_data(self):
         while True:
             time.sleep(2)
@@ -320,6 +337,7 @@ class EarthquakeDevice:
                     print("🌋 " + device_name + ": The sensors indicate an earthquake is NOT happening ❌")
 
 
+# Function below by Sean Dowling
 # Discover all other devices in the network
 def discovery():        
     while True:
@@ -358,6 +376,7 @@ def discovery():
         time.sleep(2)
 
 
+# Function below by Sean Dowling
 # Send an interest packet for a piece of data on a different device
 def send_interest_packet(data, device):        
     global requestCodeNum
@@ -389,6 +408,7 @@ def send_interest_packet(data, device):
     return requestCode
 
 
+# Function below by Sean Dowling
 # Handle an interest request coming from another device
 def handle_interests(message, address):
     interest_code = decrypt(message, private_key).split('/')[1]
@@ -419,6 +439,7 @@ def handle_interests(message, address):
                         continue
 
 
+# Function below by Sean Dowling
 # Handle data coming from a device
 def handle_data(message, address):
     interest_code = decrypt(message, private_key).split('/')[1]
@@ -440,9 +461,9 @@ def handle_data(message, address):
         for device in knownDevices:
                 if knownDevices[device] != address: # Make sure you don't send the interest back to the sender
                     device_socket.sendto(encrypt(decrypt(message, private_key), knownPublicKeys[str(knownDevices[device])]), knownDevices[device])
-                    # device_socket.sendto(message, knownDevices[device])
 
 
+# Function below by Sean Dowling
 # Send requested data to an address
 def send_requested_data(message, address):
     interest_code = decrypt(message, private_key).split('/')[1]
@@ -453,6 +474,7 @@ def send_requested_data(message, address):
     device_socket.sendto(encrypt(data_response, knownPublicKeys[str(address)]), address)
 
 
+# Function below by Prathamesh Sai
 # Recieve messages from other devices
 def receive_messages():
     while True:
@@ -474,6 +496,7 @@ def receive_messages():
             continue
 
 
+# Function below by Prathamesh Sai
 def parseArguments(parser):
     parser = argparse.ArgumentParser()
     argumentsAndDescriptions = {
@@ -497,10 +520,12 @@ def parseArguments(parser):
     return arguments
 
 
+# Function below by Prathamesh Sai
 def signal_handler(sig, frame):
     subprocess.check_output(['kill', '-9', str(os.getpid())])
 
 
+# Function below by Prathamesh Sai
 def main():
     arguments = parseArguments(argparse.ArgumentParser())
     # Set the signal handler for Ctrl+C

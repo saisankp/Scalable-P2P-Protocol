@@ -13,6 +13,7 @@ from cryptography import generate_keys, encrypt, decrypt
 
 
 class WildfireDevice:
+    # Function below by Hamzah Khan
     def __init__(self):
         # Initialize sensors and set threshold values
         self.smoke_particle_sensor = SmokeParticleSensor(threshold=30)
@@ -31,8 +32,9 @@ class WildfireDevice:
         self.humidity_sensor_active = 0
         self.temperature_probe_active = 0
         self.fire_radiometer_active = 0
-
-
+        
+    
+    # Function below by Prathamesh Sai
     def read_sensors(self):
         while True:
             time.sleep(2)
@@ -71,80 +73,96 @@ class WildfireDevice:
 
 
 class SmokeParticleSensor:
+    # Function below by Hamzah Khan
     def __init__(self, threshold):
         self.threshold = threshold
 
 
+    # Function below by Hamzah Khan
     def detect_smoke(self):
         # Simulate smoke detection 
         return random.randint(0, 100)
 
 
 class InfraredSensor:
+    # Function below by Hamzah Khan
     def __init__(self, threshold):
         self.threshold = threshold
 
 
+    # Function below by Hamzah Khan
     def measure_infrared(self):
         # Simulate infrared measurement
         return random.uniform(0, 1)
 
 
 class GasSensor:
+    # Function below by Hamzah Khan
     def __init__(self, threshold):
         self.threshold = threshold
 
 
+    # Function below by Hamzah Khan
     def detect_gas(self):
         # Simulate gas detection 
         return random.randint(0, 50)
 
 
 class WindSensor:
+    # Function below by Hamzah Khan
     def __init__(self, threshold_speed):
         self.threshold_speed = threshold_speed
 
 
+    # Function below by Hamzah Khan
     def measure_wind(self):
         # Simulate wind measurement 
         return random.randint(0, 360), random.uniform(0, 10)
 
 
 class HumiditySensor:
+    # Function below by Hamzah Khan
     def __init__(self, threshold):
         self.threshold = threshold
 
 
+    # Function below by Hamzah Khan
     def measure_humidity(self):
         # Simulate humidity measurement 
         return random.uniform(0, 100)
 
 
 class TemperatureProbe:
+    # Function below by Hamzah Khan
     def __init__(self, threshold):
         self.threshold = threshold
 
 
+    # Function below by Hamzah Khan
     def measure_temperature(self):
         # Simulate temperature measurement 
         return random.uniform(-10, 40)
 
 
 class GPSTracker:
+    # Function below by Hamzah Khan
     def get_location(self):
         # Simulate GPS location 
         return (random.uniform(-90, 90), random.uniform(-180, 180))
 
 
 class FireRadiometer:
+    # Function below by Hamzah Khan
     def __init__(self, threshold):
         self.threshold = threshold
 
+    # Function below by Hamzah Khan
     def measure_fire_intensity(self):
         # Simulate fire intensity measurement 
         return random.uniform(0, 100)
     
 
+# Function below by Sean Dowling
 # Discover all other devices in the network
 def discovery():        
     while True:
@@ -183,6 +201,7 @@ def discovery():
         time.sleep(2)
 
 
+# Function below by Sean Dowling
 # Send an interest packet for a piece of data on a different device
 def send_interest_packet(data, device):        
     global requestCodeNum
@@ -214,6 +233,7 @@ def send_interest_packet(data, device):
     return requestCode
 
 
+# Function below by Sean Dowling
 # Handle an interest request coming from another device
 def handle_interests(message, address):
     interest_code = decrypt(message, private_key).split('/')[1]
@@ -245,6 +265,7 @@ def handle_interests(message, address):
                         continue
 
 
+# Function below by Sean Dowling
 # Handle data coming from a device
 def handle_data(message, address):
     interest_code = decrypt(message, private_key).split('/')[1]
@@ -269,6 +290,7 @@ def handle_data(message, address):
                     # device_socket.sendto(message, knownDevices[device])
 
 
+# Function below by Sean Dowling
 # Send requested data to an address
 def send_requested_data(message, address):
     interest_code = decrypt(message, private_key).split('/')[1]
@@ -279,6 +301,7 @@ def send_requested_data(message, address):
     device_socket.sendto(encrypt(data_response, knownPublicKeys[str(address)]), address)
 
 
+# Function below by Prathamesh Sai
 # Recieve messages from other devices
 def receive_messages():
     while True:
@@ -300,6 +323,7 @@ def receive_messages():
             continue
 
 
+# Function below by Prathamesh Sai
 def parseArguments(parser):
     parser = argparse.ArgumentParser()
     argumentsAndDescriptions = {
@@ -322,10 +346,13 @@ def parseArguments(parser):
 
     return arguments
 
+
+# Function below by Prathamesh Sai
 def signal_handler(sig, frame):
     subprocess.check_output(['kill', '-9', str(os.getpid())])
 
 
+# Function below by Prathamesh Sai
 def main():
     arguments = parseArguments(argparse.ArgumentParser())
     # Set the signal handler for Ctrl+C

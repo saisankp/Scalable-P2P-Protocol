@@ -14,6 +14,7 @@ from cryptography import generate_keys, encrypt, decrypt
 
 
 class Drone:
+    # Function below by Prathamesh Sai
     def __init__(self):
         self.destination = (0,0) #The current target destination the drone is trying to go to
         self.nearest_charger = (100,100) # Nearest charger to drone
@@ -32,6 +33,7 @@ class Drone:
         self.flashlight_status = False # Status of flashlight load on drone
 
 
+    # Function below by Prathamesh Sai
     def simulate_sensor_data(self):
         while True:
             # Move the drone towards the destination
@@ -61,6 +63,7 @@ class Drone:
             time.sleep(2)
     
 
+    # Function below by Sean Dowling
     def update_gps(self):
         # Move towards destination if not already there (using the pythagorean theorem)
         if math.sqrt((self.gps[0] - self.destination[0])**2 + (self.gps[1] - self.destination[1])**2) > 1:
@@ -75,6 +78,7 @@ class Drone:
             self.gps = (self.gps[0] + step_x, self.gps[1] + step_y)
 
 
+    # Function below by Prathamesh Sai
     def drone_logic(self):
         while True:
             if self.charging:
@@ -163,7 +167,6 @@ class Drone:
                             
                             # Check if at least half of the sensors are detecting an hurricane
                             if all(key in DataReceived for key in sensor_codes):
-                                print([(DataReceived[anemometer_code]),(DataReceived[barometer_code]),(DataReceived[hygrometer_code]),(DataReceived[thermometer_code]),(DataReceived[rain_gauge_code]),(DataReceived[lightning_detector_code]),(DataReceived[doppler_radar_code]), (DataReceived[storm_surge_sensor_code])].count("True"))
                                 if [(DataReceived[anemometer_code]),(DataReceived[barometer_code]),(DataReceived[hygrometer_code]),(DataReceived[thermometer_code]),(DataReceived[rain_gauge_code]),(DataReceived[lightning_detector_code]),(DataReceived[doppler_radar_code]), (DataReceived[storm_surge_sensor_code])].count("True") >= 4:
                                     gps_code = send_interest_packet("gps", device)
                                     self.busy = True # mark drone as busy
@@ -256,6 +259,7 @@ class Drone:
             time.sleep(1)
 
 
+# Function below by Sean Dowling
 # Use pythagorean theorem to find the minimum distance to a location (whether it is a drone charger, earthquake device etc)
 def get_min_distance(locations, drone_position):
     distances = []
@@ -264,6 +268,7 @@ def get_min_distance(locations, drone_position):
     return locations[np.argmin(distances)]
 
 
+# Function below by Sean Downling
 # Discover all other devices in the network
 def discovery():        
     while True:
@@ -302,6 +307,7 @@ def discovery():
         time.sleep(2)
 
 
+# Function below by Sean Dowling
 # Send an interest packet for a piece of data on a different device
 def send_interest_packet(data, device):        
     global requestCodeNum
@@ -333,6 +339,7 @@ def send_interest_packet(data, device):
     return requestCode
 
 
+# Function below by Sean Dowling
 # Handle an interest request coming from another device
 def handle_interests(message, address):
     interest_code = decrypt(message, private_key).split('/')[1]
@@ -363,6 +370,7 @@ def handle_interests(message, address):
                         continue
 
 
+# Function below by Sean Dowling
 # Handle data coming from a device
 def handle_data(message, address):
     interest_code = decrypt(message, private_key).split('/')[1]
@@ -384,9 +392,9 @@ def handle_data(message, address):
         for device in knownDevices:
                 if knownDevices[device] != address: # Make sure you don't send the interest back to the sender
                     device_socket.sendto(encrypt(decrypt(message, private_key), knownPublicKeys[str(knownDevices[device])]), knownDevices[device])
-                    # device_socket.sendto(message, knownDevices[device])
 
 
+# Function below by Sean Dowling
 # Send requested data to an address
 def send_requested_data(message, address):
     interest_code = decrypt(message, private_key).split('/')[1]
@@ -397,6 +405,7 @@ def send_requested_data(message, address):
     device_socket.sendto(encrypt(data_response, knownPublicKeys[str(address)]), address)
 
 
+# Function below by Prathamesh Sai
 # Recieve messages from other devices
 def receive_messages():
     while True:
@@ -418,6 +427,7 @@ def receive_messages():
             continue
 
 
+# Function below by Prathamesh Sai
 def parseArguments(parser):
     parser = argparse.ArgumentParser()
     argumentsAndDescriptions = {
@@ -441,10 +451,12 @@ def parseArguments(parser):
     return arguments
 
 
+# Function below by Prathamesh Sai
 def signal_handler(sig, frame):
     subprocess.check_output(['kill', '-9', str(os.getpid())])
 
 
+# Function below by Prathamesh Sai
 def main():
     arguments = parseArguments(argparse.ArgumentParser())
     # Set the signal handler for Ctrl+C
