@@ -9,7 +9,7 @@ def-env activate-virtualenv [] {
     }
 
     let is-windows = ((sys).host.name | str downcase) == 'windows'
-    let virtual-env = '/users/ugrad/dowlins6/Scalable-P2P-Protocol/env'
+    let virtual-env = '/users/ugrad/saisankp/Scalable-P2P-Protocol/env'
     let bin = 'bin'
     let path-sep = ':'
     let path-name = if $is-windows {
@@ -89,4 +89,4 @@ def-env activate-virtualenv [] {
 activate-virtualenv
 
 alias pydoc = python -m pydoc
-alias deactivate = source '/users/ugrad/dowlins6/Scalable-P2P-Protocol/env/bin/deactivate.nu'
+alias deactivate = source '/users/ugrad/saisankp/Scalable-P2P-Protocol/env/bin/deactivate.nu'
