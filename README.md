@@ -20,10 +20,10 @@ source env/bin/activate
 ```
 
 # Execution
-There are multiple ways of running the code to see the value it brings. The Raspberry Pi's we used are provided to us by SCSS (School of Computer Science and Statistics) at Trinity College Dublin through a ssh connection with macneill.
+There are multiple ways of running the code to see the value it brings. The Raspberry Pi's we used are provided to us by SCSS (School of Computer Science and Statistics) at Trinity College Dublin through a ssh connection with macneill. Beware that before running any .sh file, you may need to allow permissions to avoid the error "Permission denied". You can do so by doing `chmod +x nameOfFile.sh`, followed by `./nameOfFile.sh` to run it.
 
 ## 1. Regular execution across various Raspberry Pi's
-Here is a scenario that utilises all 5 devices our system uses (which have 8 sensors/actuators each) and shows how each device communicates with each other across multiple Raspberry Pi's. Beware that before running any .sh file, you may need to allow permissions to avoid the error "Permission denied". You can do so by doing `chmod +x nameOfFile.sh`, followed by `./nameOfFile.sh` to run it.
+Here is a scenario that utilises all 5 devices our system uses (which have 8 sensors/actuators each) and shows how each device communicates with each other across multiple Raspberry Pi's.
 
 ![Regular execution](assets/img/regular-execution.png)
 
