@@ -253,7 +253,7 @@ class Drone:
                     print("🛸 " + device_name + ": My job is done. I'm going back to base 🏠")
 
             # Wait 1 second before trying to cater for a disaster again
-            # time.sleep(0.5)
+            time.sleep(1)
 
 
 # Use pythagorean theorem to find the minimum distance to a location (whether it is a drone charger, earthquake device etc)
@@ -299,7 +299,7 @@ def discovery():
             device_socket.sendto(discovery_message+public_key, (discovery_ip[0], discovery_port))
                 
         # Wait for 1 seconds before trying to discover more devices
-        time.sleep(2)
+        time.sleep(1)
 
 
 # Send an interest packet for a piece of data on a different device
