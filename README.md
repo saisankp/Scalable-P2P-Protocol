@@ -122,7 +122,7 @@ https://github.com/saisankp/Scalable-P2P-Protocol/assets/34750736/220b6b16-af9b-
 ## Drone interacting with devices (when devices detect a disaster and contact drones)
 https://github.com/saisankp/Scalable-P2P-Protocol/assets/34750736/d9a5484b-aa8f-4213-a552-4fcfc9c67384
 
-## Proof of robustness in our system with flooding (special drone charger file that purposefully doesn't respond)
+## Proof of robustness in our system with flooding (special drone charger file that purposefully doesn't respond to mimic harsh environmental conditions)
 https://github.com/saisankp/Scalable-P2P-Protocol/assets/34750736/7a8d11bd-56cf-4849-907b-a400a776106e
 
 [saisankp]: https://github.com/saisankp
