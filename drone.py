@@ -299,7 +299,7 @@ def discovery():
             device_socket.sendto(discovery_message+public_key, (discovery_ip[0], discovery_port))
                 
         # Wait for 1 seconds before trying to discover more devices
-        time.sleep(1)
+        time.sleep(2)
 
 
 # Send an interest packet for a piece of data on a different device

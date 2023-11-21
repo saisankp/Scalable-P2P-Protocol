@@ -66,7 +66,6 @@ class WildfireDevice:
             if len(knownDevices) > 0:
                 if above_threshold_count >= 6:
                     print("🔥 " + device_name + ": The sensors indicate a wildfire is happening ✅")
-                    time.sleep(1)
                 else:
                     print("🔥 " + device_name + ": The sensors indicate a wildfire is NOT happening ❌")
 

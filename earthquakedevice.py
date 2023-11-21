@@ -316,7 +316,6 @@ class EarthquakeDevice:
             if len(knownDevices) > 0:
                 if(activated_sensors.count(True) >= 1):
                     print("🌋 " + device_name + ": The sensors indicate an earthquake is happening ✅")
-                    time.sleep(1)
                 else:
                     print("🌋 " + device_name + ": The sensors indicate an earthquake is NOT happening ❌")
 

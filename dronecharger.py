@@ -146,7 +146,6 @@ def send_interest_packet(data, device):
     else:
         device_socket.sendto(encrypt(packet, knownPublicKeys[str(knownDevices[device])]), knownDevices[device])
         time.sleep(0.1)
-
         # Check if the requested data has been received
         if requestCode not in str(DataReceived) and len([key for key in forwardingTable if key.startswith(device+"/")]) > 0:
             # If not, perform flooding (contact all known devices)

@@ -78,7 +78,6 @@ class HurricaneDevice:
             if len(knownDevices) > 0:
                 if above_threshold_count >= 4:
                     print("🌀 " + device_name + ": The sensors indicate a hurricane is happening ✅")
-                    # time.sleep(1)
                 else:
                     print("🌀 " + device_name + ": The sensors indicate a hurricane is NOT happening ❌")
 
