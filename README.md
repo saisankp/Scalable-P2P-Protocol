@@ -7,7 +7,7 @@ This project simulates a disaster management system using a scalable information
 |    Student Name    | Student ID |                Course                |      GitHub Username       |
 |:------------------:|:----------:|:------------------------------------:|:--------------------------:|
 |   Prathamesh Sai   |  19314123  | Integrated Computer Science (M.C.S.) |    [saisankp][saisankp]    |
-|     Sean Dowling   |  to fill in  | Integrated Computer Engineering (M.A.I)      |    [seandownling123][seandownling123]      |
+|     Sean Dowling   |  19333739  | Integrated Computer Engineering (M.A.I)      |    [seandownling123][seandownling123]      |
 |     Hamzah Khan    |  23335427  | Computer Science - Data Science      |    [hamzah7k][hakhan]      |
 |     Benika Yadav    |  23343816  | Computer Science - Data Science      |    [beni444][beni444]      |
 
