@@ -300,7 +300,7 @@ class EarthquakeDevice:
         self.seismometer_active = 0
         self.accelerometer_active = 0
         self.inclinometer_active = 0
-        self.acounsticsensor_active = 0
+        self.acousticsensor_active = 0
         self.straingauge_active = 0
         self.pwavesensor_active = 0
         self.swavesensor_active = 0
@@ -314,7 +314,7 @@ class EarthquakeDevice:
             self.seismometer_active = seismometer.activated
             self.accelerometer_active = accelerometer.activated
             self.inclinometer_active = inclinometer.activated
-            self.acounsticsensor_active = acounsticsensor.activated
+            self.acousticsensor_active = acousticsensor.activated
             self.straingauge_active = straingauge.activated
             self.pwavesensor_active = pwavesensor.activated
             self.swavesensor_active = swavesensor.activated
@@ -323,7 +323,7 @@ class EarthquakeDevice:
             self.seismometer_active,
             self.accelerometer_active,
             self.inclinometer_active,
-            self.acounsticsensor_active,
+            self.acousticsensor_active,
             self.straingauge_active,
             self.pwavesensor_active,
             self.swavesensor_active
@@ -534,7 +534,7 @@ def main():
     # Declare global variables
     global earthquake
     global earthquakeDevice
-    global acounsticsensor
+    global acousticsensor
     global inclinometer
     global straingauge
     global accelerometer
@@ -561,7 +561,7 @@ def main():
     # Initialise global variables
     earthquake = Earthquake()
     earthquakeDevice = EarthquakeDevice()
-    acounsticsensor = AcousticSensor()
+    acousticsensor = AcousticSensor()
     inclinometer = Inclinometer()
     straingauge = StrainGauge()
     accelerometer = Accelerometer()
@@ -590,7 +590,7 @@ def main():
     seismometer_thread = threading.Thread(target=seismometer.generate_data)
     accelerometer_thread = threading.Thread(target=accelerometer.generate_data)
     inclinometer_thread = threading.Thread(target=inclinometer.generate_data)
-    acounsticsensor_thread = threading.Thread(target=acounsticsensor.generate_data)
+    acousticsensor_thread = threading.Thread(target=acousticsensor.generate_data)
     straingauge_thread = threading.Thread(target=straingauge.generate_data)
     pwavesensor_thread = threading.Thread(target=pwavesensor.generate_data)
     swavesensor_thread = threading.Thread(target=swavesensor.generate_data)
@@ -601,7 +601,7 @@ def main():
     trigger_earthquake_thread.start()
     seismometer_thread.start()
     accelerometer_thread.start()
-    acounsticsensor_thread.start()
+    acousticsensor_thread.start()
     inclinometer_thread.start()
     straingauge_thread.start()
     pwavesensor_thread.start()

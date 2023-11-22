@@ -143,7 +143,7 @@ class Drone:
                             # Check if at least half of the sensors are sensors are detecting a fire
                             if all(key in DataReceived for key in sensor_codes):
                                 if [(DataReceived[smoke_particle_sensor_code]),(DataReceived[infrared_sensor_code]),(DataReceived[gas_sensor_code]),(DataReceived[wind_sensor_code]),(DataReceived[humidity_sensor_code]),(DataReceived[temperature_probe_code]),(DataReceived[fire_radiometer_code])].count("True") >= 6:
-                                        # A wildfire has been detected. Mark the drone as busy and ask for the wildfire sensor's GPS location.
+                                    # A wildfire has been detected. Mark the drone as busy and ask for the wildfire device's GPS location.
                                     gps_code = send_interest_packet("gps", device)
                                     self.busy = True # Mark drone as busy
                                     print("🛸 " + device_name + ": Informed of a detected wildfire 🔥")
@@ -168,6 +168,7 @@ class Drone:
                             # Check if at least half of the sensors are detecting an hurricane
                             if all(key in DataReceived for key in sensor_codes):
                                 if [(DataReceived[anemometer_code]),(DataReceived[barometer_code]),(DataReceived[hygrometer_code]),(DataReceived[thermometer_code]),(DataReceived[rain_gauge_code]),(DataReceived[lightning_detector_code]),(DataReceived[doppler_radar_code]), (DataReceived[storm_surge_sensor_code])].count("True") >= 4:
+                                    # A hurricane has been detected. Mark the drone as busy and ask for the hurricane device's GPS location.
                                     gps_code = send_interest_packet("gps", device)
                                     self.busy = True # mark drone as busy
                                     print("🛸 " + device_name + ": Informed of a detected hurricane 🌀")
