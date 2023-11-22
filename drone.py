@@ -260,7 +260,7 @@ class Drone:
 
 
 # Function below by Sean Dowling
-# Use pythagorean theorem to find the minimum distance to a location (whether it is a drone charger, earthquake device etc)
+# Calculate the euclidean distance to find the minimum distance to a location (whether it is a drone charger, earthquake device etc)
 def get_min_distance(locations, drone_position):
     distances = []
     for point in locations:
