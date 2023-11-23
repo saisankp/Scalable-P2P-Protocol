@@ -40,7 +40,7 @@ class Drone:
             self.update_gps()
             print("🛸 " + device_name + ": Current location is " + str(self.gps))
             if not self.charging:
-                self.battery_level -= 5 # Battery level goes down over time
+                self.battery_level -= 0.5 # Battery level goes down over time
                 print("🛸 " + device_name + ": Current battery percentage is " + str(self.battery_level) + "%")
             else: 
                 self.battery_level += min(10, 100-self.battery_level) # If charging, the battery goes up
@@ -140,7 +140,6 @@ class Drone:
                             temperature_probe_code = send_interest_packet("temperature_probe_active", device)
                             fire_radiometer_code = send_interest_packet("fire_radiometer_active", device)
                             sensor_codes = [smoke_particle_sensor_code,infrared_sensor_code,gas_sensor_code,wind_sensor_code,humidity_sensor_code,temperature_probe_code,fire_radiometer_code]
-                            # Check if at least half of the sensors are sensors are detecting a fire
                             if all(key in DataReceived for key in sensor_codes):
                                 if [(DataReceived[smoke_particle_sensor_code]),(DataReceived[infrared_sensor_code]),(DataReceived[gas_sensor_code]),(DataReceived[wind_sensor_code]),(DataReceived[humidity_sensor_code]),(DataReceived[temperature_probe_code]),(DataReceived[fire_radiometer_code])].count("True") >= 6:
                                     # A wildfire has been detected. Mark the drone as busy and ask for the wildfire device's GPS location.
@@ -164,8 +163,6 @@ class Drone:
                             doppler_radar_code = send_interest_packet("doppler_radar_active", device)
                             storm_surge_sensor_code = send_interest_packet("storm_surge_sensor_active", device)
                             sensor_codes = [anemometer_code,barometer_code,hygrometer_code,thermometer_code,rain_gauge_code,lightning_detector_code,doppler_radar_code,storm_surge_sensor_code]
-                            
-                            # Check if at least half of the sensors are detecting an hurricane
                             if all(key in DataReceived for key in sensor_codes):
                                 if [(DataReceived[anemometer_code]),(DataReceived[barometer_code]),(DataReceived[hygrometer_code]),(DataReceived[thermometer_code]),(DataReceived[rain_gauge_code]),(DataReceived[lightning_detector_code]),(DataReceived[doppler_radar_code]), (DataReceived[storm_surge_sensor_code])].count("True") >= 4:
                                     # A hurricane has been detected. Mark the drone as busy and ask for the hurricane device's GPS location.
@@ -189,7 +186,6 @@ class Drone:
                             pwavesensor_code = send_interest_packet("pwavesensor_active", device)
                             swavesensor_code = send_interest_packet("swavesensor_active", device)
                             sensor_codes = [seismometer_code,accelerometer_code,inclinometer_code,acounsticsensor_code,straingauge_code,pwavesensor_code,swavesensor_code]
-                            # Check if at least half of the sensors are detecting an earthquake (to stop false positive reactions)
                             if all(key in DataReceived for key in sensor_codes):
                                 if [(DataReceived[seismometer_code]),(DataReceived[accelerometer_code]),(DataReceived[inclinometer_code]),(DataReceived[acounsticsensor_code]),(DataReceived[straingauge_code]),(DataReceived[pwavesensor_code]),(DataReceived[swavesensor_code])].count("True") >= 1:
                                     # An earthquake has been detected. Mark the drone as busy and ask for the earthquake device's GPS location.
