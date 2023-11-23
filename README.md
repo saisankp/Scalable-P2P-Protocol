@@ -7,9 +7,9 @@ This project simulates a disaster management system using a scalable information
 |    Student Name    | Student ID |                Course                |      GitHub Username       |
 |:------------------:|:----------:|:------------------------------------:|:--------------------------:|
 |   Prathamesh Sai   |  19314123  | Integrated Computer Science (M.C.S.) |    [saisankp][saisankp]    |
-|     Sean Dowling   |  to fill in  | Integrated Computer Engineering (M.A.I)      |    [seandownling123][seandownling123]      |
+|     Sean Dowling   |  19333739  | Integrated Computer Engineering (M.A.I)      |    [seandownling123][seandownling123]      |
 |     Hamzah Khan    |  23335427  | Computer Science - Data Science      |    [hamzah7k][hakhan]      |
-|     Benika Yadav    |  to fill in  | Computer Science - Data Science      |    [beni444][beni444]      |
+|     Benika Yadav    |  23343816  | Computer Science - Data Science      |    [beni444][beni444]      |
 
 Code contributions by each member are noted in comments above each function.
 
@@ -20,10 +20,10 @@ source env/bin/activate
 ```
 
 # Execution
-There are multiple ways of running the code to see the value it brings. The Raspberry Pi's we used are provided to us by SCSS (School of Computer Science and Statistics) at Trinity College Dublin through a ssh connection from macneill. Beware that before running any .sh file, you may need to allow permissions to avoid the error "permission denied". You can do so by doing `chmod +x nameOfFile.sh`, followed by `./nameOfFile.sh` to run it.
+There are multiple ways of running the code to see the value it brings. The Raspberry Pis we used are provided to us by SCSS (School of Computer Science and Statistics) at Trinity College Dublin through a ssh connection from macneill. Beware that before running any .sh file, you may need to allow permissions to avoid the error "permission denied". You can do so by doing `chmod +x nameOfFile.sh`, followed by `./nameOfFile.sh` to run it.
 
-## 1. Regular execution across various Raspberry Pi's
-Here is a scenario that utilises all 5 devices our system uses (which have 8 sensors/actuators each) and shows how each device communicates with each other across multiple Raspberry Pi's. Port 33800 is used for the discovery stage (to let new devices know where other devices are and to let existing devices know when a new device enters the network).
+## 1. Regular execution across various Raspberry Pis
+Here is a scenario that utilises all 5 devices our system uses (which have 8 sensors/actuators each) and shows how each device communicates with each other across multiple Raspberry Pis. Port 33800 is used for the discovery stage (to let new devices know where other devices are and to let existing devices know when a new device enters the network).
 
 ![Regular execution](assets/img/regular-execution.png)
 
@@ -71,7 +71,7 @@ chmod +x demonstration/demo-1/pi-27/terminal-2.sh
 ./demonstration/demo-1/pi-27/terminal-2.sh
 ```
 
-Make sure you run these scripts on their appropriate Raspberry Pi's. Using a different machine will cause issues since the commands used are catered to each Raspberry Pi.
+Make sure you run these scripts on their appropriate Raspberry Pis. Using a different machine will cause issues since the commands used are catered to each Raspberry Pi.
 
 ## 2. View the robustness of our system
 Drones in disaster scenarios are going to experience network issues. What happens if a drone loses connection with a drone charger all of a sudden? 
@@ -106,10 +106,10 @@ chmod +x demonstration/demo-2/pi-27/terminal-2.sh
 ./demonstration/demo-2/pi-27/terminal-2.sh
 ```
 
-Make sure you run these scripts on their appropriate Raspberry Pi's. Using a different machine will cause issues since the commands used are catered to each Raspberry Pi.
+Make sure you run these scripts on their appropriate Raspberry Pis. Using a different machine will cause issues since the commands used are catered to each Raspberry Pi.
 
 ## 3. Run all 5 devices per Raspberry Pi (OPTIONAL)
-This is only optional if you are curious and want to experience some mayhem. It is hard to track everything going on, since there would be 5 devices x 3 Raspberry Pi's = 15 devices running in total. However, if you are curious you can run it to see how the system handles it.
+This is only optional if you are curious and want to experience some mayhem. It is hard to track everything going on, since there would be 5 devices x 3 Raspberry Pis = 15 devices running in total. However, if you are curious you can run it to see how the system handles it.
 
 You need 5 terminals open per Raspberry Pi.
 
